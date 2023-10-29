@@ -1,0 +1,5 @@
+# testing framework
+/tests/bats/
+/tests/test_helper/
+/blood.db
+/blood.properties
