@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS blood (
+	datetime TIMESTAMP UNIQUE,
+	systolic INTEGER, 
+	diastolic INTEGER, 
+	pulse INTEGER, 
+	comment TEXT DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS sugar (
+  datetime TIMESTAMP UNIQUE,
+  sugar INTEGER NOT NULL,
+  comment TEXT DEFAULT ''
+);
+
