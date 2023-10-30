@@ -1,9 +1,9 @@
 # BPS2 - Blood Parameters Storage System
 
 ## Description
-BPS2 is a simple command line interface to store previous measured blood parameters such a pressure 
+BPS2 is a simple command line interface to store previous measured blood parameters such as pressure 
 (diastolic, systolic and pulse) and sugar level. By default, data is stored in sqlite file named blood.db in local 
-directory. There is possibility to synchronize blood.db with postgresql server (in both directions).
+directory. There is possibility to synchronize blood.db with postgresql server.
 
 ## Installation
 
@@ -40,7 +40,7 @@ Diastolic: "80"
 Pulse: "90"
 Comment: ""
 ````
-And check if it is persisted on database by using query:
+And check if it is persisted in database by using query:
 ````
 $ ./blood.sh -q 'SELECT * FROM blood;'
 Using: blood.properties
@@ -86,7 +86,7 @@ Pulse: "12"
 Comment: ""
 INSERT 0 1
 ````
-And check if it is persisted on database by using query:
+And check if it is persisted in database by using query:
 ````
 $ ./blood.sh -e pgsql -q 'SELECT * FROM blood;'
 Using: blood.properties
@@ -158,9 +158,9 @@ $ ./blood_tests.sh
 ## Known bugs
 1. No error message for **invalid** input (missing parameter -p when adding blood pressure) `./blood.sh 123/90/100`
 
-## To Do
-- add units to _blood_template.properties_
-- add comment feature to CLI for sugar input (-s 110/'my comment'
+## TODO
+- add units option to _blood_template.properties_ so user can specify unit of value he provide to system
+- add comment feature to CLI for sugar input (-s 110/'my comment')
 - add feature to store urine acid
 - add feature to store cholesterol level
 - add web interface with features like:
@@ -174,3 +174,4 @@ $ ./blood_tests.sh
   - xml
   - csv
 - publish code from grafana that generates fancy graphs
+- dockerize postgresql with volume on local storage

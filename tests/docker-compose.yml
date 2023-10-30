@@ -20,7 +20,7 @@ services:
     links:
       - "db"
     volumes:
-      - ./tests:/opt/tests
+      - .:/opt/tests
       - db:/var/lib/postgresql/data
     networks: 
       - blood

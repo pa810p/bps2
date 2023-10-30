@@ -1,14 +1,24 @@
 #!/bin/bash
+###############################################################################
+# BPS2 (Blood Parameters Storage System) is a simple command line interface   #
+# to store previous measured blood parameters such as pressure (diastolic,    #
+# systolic and pulse) and sugar level.                                        #
+# Author:     Paweł Prokop (pa810p@gmail.com)                                 #
+# Repository: https://github.com/pa810p/bps2                                  #
+# License:    GNU General Public License v3.0  see: LICENSE                   #
+###############################################################################
 
-################################################
-helpme() {
+######################################
+# Displays Usage information and exit
+######################################
+function helpme() {
 	echo "Usage: $0 [OPTIONS]";
 	echo "OPTIONS include:";
   echo "-d --debug                     shows more detailed debug information";
 	echo "-D --dbname DATABASE_NAME      database name";
 	echo "-e --engine DATABASE_ENGINE    database engine can be either sqlite or pgsql";
 	echo "-h --help                      help screen";
-	echo "-H --host HOST                 database host";
+	echo "-H --host DATABASE_HOST        database host";
 	echo "-i --initialize INIT_FILENAME  initialize filename";
 	echo "-p --pressure MEASUREMENT      blood pressure measurement in format of eg.: 120/80/90/'comment'";
 	echo "                               (systolic/diastolic/pulse/'comment') where comment is optional";
@@ -25,30 +35,54 @@ helpme() {
 	exit 0;
 }
 
-#################################################
-fail() {
-	echo "Invalid parameter: $1: \"$2\" aborting!";
-	helpme;
+###############################################
+# Displays reason of failure, usage and exits
+# Arguments:
+#   $1 name of parameter
+#   $2 value of parameter
+###############################################
+function fail() {
+  echo "Invalid parameter: $1: \"$2\" aborting!";
+  helpme;
 }
 
-#################################################
-log() {
-	echo -e "$1";
+############################
+# Outputs log information
+# Arguments:
+#   $1 log information
+############################
+function log() {
+  echo -e "$1";
 }
 
-#################################################
-debug() {
+##################################################
+# Outputs debug information according to settings
+# Arguments:
+#   $1 debug information
+##################################################
+function debug() {
   if [ "$DEBUG" = "true" ] ; then
     log "$1";
   fi
 }
 
-#######################
-# executes sql query. #
-#######################
-query() {
+##############################
+# Executes sql query.
+# Globals:
+#   DB_ENGINE
+#   DATABASE_NAME
+#   DATABASE_USER
+#   DATABASE_PASSWD
+#   DATABASE_HOST
+#   DATABASE_PORT
+#   PGSQL
+#   SQLITE
+# Arguments:
+#   sql query to execute
+##############################
+function query() {
 
-	_QUERY=$1;
+	readonly _QUERY=$1;
 
 	log "Executing query: $_QUERY";
 
@@ -57,8 +91,8 @@ query() {
 			echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
 		;;
 		"pgsql" )
-			COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
-			$COMMAND -c "$_QUERY";
+			_COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+			$_COMMAND -c "$_QUERY";
 		;;
 		* )
 			log "Only sqlite and pgsql is supported right now.";
@@ -67,51 +101,63 @@ query() {
 }
 
 ############################################
-# This function adds entry to blood table. #
+# Adds entry to blood table  #
+# Globals:
+#   DB_ENGINE
+#   DATABASE_NAME
+#   DATABASE_USER
+#   DATABASE_PASSWD
+#   DATABASE_HOST
+#   DATABASE_PORT
+#   BLOOD_TABLE
+#   PGSQL
+#   SQLITE
+# Arguments:
+#   measurement string to be parsed
 ############################################
-add() {
+function pressure_add() {
 	# validate input
-	MEASUREMENT=$1;
+	readonly _MEASUREMENT=$1;
 
-	if [ "$MEASUREMENT" = "" ] ; then
+	if [ "$_MEASUREMENT" = "" ] ; then
 		helpme
 	else
 		# parsing 120/80/90/'optional comment' like measurement input
-		SYSTOLIC=$(echo "$MEASUREMENT" | awk -F '/' '{print $1}')
-		DIASTOLIC=$(echo "$MEASUREMENT" | awk -F '/' '{print $2}')
-		PULSE=$(echo "$MEASUREMENT" | awk -F '/' '{print $3}')
-		COMMENT=$(echo "$MEASUREMENT" | awk -F '/' '{print $4}')
+		_SYSTOLIC=$(echo "$_MEASUREMENT" | awk -F '/' '{print $1}')
+		_DIASTOLIC=$(echo "$_MEASUREMENT" | awk -F '/' '{print $2}')
+		_PULSE=$(echo "$_MEASUREMENT" | awk -F '/' '{print $3}')
+		_COMMENT=$(echo "$_MEASUREMENT" | awk -F '/' '{print $4}')
 	fi
 
 	# adding pressure
 
-	log "measurement: $MEASUREMENT";
-	log "Systolic: \"$SYSTOLIC\"";
-	log "Diastolic: \"$DIASTOLIC"\";
-	log "Pulse: \"$PULSE\"";
-	log "Comment: \"$COMMENT\"";
+	log "measurement: $_MEASUREMENT";
+	log "Systolic: \"$_SYSTOLIC\"";
+	log "Diastolic: \"$_DIASTOLIC"\";
+	log "Pulse: \"$_PULSE\"";
+	log "Comment: \"$_COMMENT\"";
 
-	if ! [[ $SYSTOLIC =~ ^[0-9]+$ ]] ; then fail "Systolic" "$SYSTOLIC"; fi
-	if ! [[ $DIASTOLIC =~ ^[0-9]+$ ]] ; then fail "Diastolic" "$DIASTOLIC"; fi
-	if ! [[ $PULSE =~ ^[0-9]+$ ]] ; then fail "Pulse" "$PULSE"; fi
+	if ! [[ $_SYSTOLIC =~ ^[0-9]+$ ]] ; then fail "Systolic" "$_SYSTOLIC"; fi
+	if ! [[ $_DIASTOLIC =~ ^[0-9]+$ ]] ; then fail "Diastolic" "$_DIASTOLIC"; fi
+	if ! [[ $_PULSE =~ ^[0-9]+$ ]] ; then fail "Pulse" "$_PULSE"; fi
 
 	case $DB_ENGINE in
 		"sqlite" )
-			QUERY="INSERT INTO $BLOOD_TABLE (
+			_QUERY="INSERT INTO $BLOOD_TABLE (
 				datetime, systolic, diastolic, pulse, comment) VALUES (
-				strftime('%Y-%m-%d %H:%M:%S','now', 'localtime'), $SYSTOLIC, $DIASTOLIC, $PULSE, \"$COMMENT\"
+				strftime('%Y-%m-%d %H:%M:%S','now', 'localtime'), $_SYSTOLIC, $_DIASTOLIC, $_PULSE, \"$_COMMENT\"
 			);"
 			
-			echo "$QUERY" | $SQLITE "$DATABASE_NAME.db";
+			echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
 		;;
 		"pgsql" )
-			QUERY="INSERT INTO $BLOOD_TABLE (
+			_QUERY="INSERT INTO $BLOOD_TABLE (
 				datetime, systolic, diastolic, pulse, comment) VALUES (
-				'now', $SYSTOLIC, $DIASTOLIC, $PULSE, '$COMMENT'
+				'now', $_SYSTOLIC, $_DIASTOLIC, $_PULSE, '$_COMMENT'
 			);"
 			
-			COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
-      $COMMAND -c "$QUERY";
+			_COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+      $_COMMAND -c "$_QUERY";
 		;;
 	* )
 			log "Only sqlite and pgsql is supported right now.";
@@ -120,37 +166,49 @@ add() {
 }
 
 ############################################
-# This function adds entry to sugar table. #
+# Adds sugar entry to sugar table. #
+# Globals:
+#   DB_ENGINE
+#   DATABASE_NAME
+#   DATABASE_USER
+#   DATABASE_PASSWD
+#   DATABASE_HOST
+#   DATABASE_PORT
+#   BLOOD_TABLE
+#   PGSQL
+#   SQLITE
+# Arguments:
+#   measurement string to be parsed
 ############################################
-sugar() {
-  MEASUREMENT=$1;
+function sugar_add() {
+  readonly _MEASUREMENT=$1;
   
-  if [ "$MEASUREMENT" = "" ] ; then
+  if [ "$_MEASUREMENT" = "" ] ; then
     helpme
   else
-    SUGAR=$(echo "$MEASUREMENT" | awk -F '/' '{print $1}')
-		COMMENT=$(echo "$MEASUREMENT" | awk -F '/' '{print $2}')
+    _SUGAR=$(echo "$_MEASUREMENT" | awk -F '/' '{print $1}')
+		_COMMENT=$(echo "$_MEASUREMENT" | awk -F '/' '{print $2}')
   fi
 
-  log "Sugar: \"$SUGAR\"";
+  log "Sugar: \"_$SUGAR\"";
 
-  if ! [[ "$SUGAR" =~ ^[0-9]+$ ]] ; then fail "sugar" "$SUGAR"; fi
+  if ! [[ "$_SUGAR" =~ ^[0-9]+$ ]] ; then fail "sugar" "$_SUGAR"; fi
 
   case $DB_ENGINE in
     "sqlite" )
-      QUERY="INSERT INTO $SUGAR_TABLE (
+      _QUERY="INSERT INTO $SUGAR_TABLE (
         datetime, sugar, comment) VALUES (
-				strftime('%Y-%m-%d %H:%M:%S','now', 'localtime'), $SUGAR, \"$COMMENT\");"
+				strftime('%Y-%m-%d %H:%M:%S','now', 'localtime'), $_SUGAR, \"$_COMMENT\");"
 
-      echo "$QUERY" | $SQLITE "$DATABASE_NAME.db";
+      echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
     ;;
     "pgsql" )
-      QUERY="INSERT INTO $SUGAR_TABLE (
+      _QUERY="INSERT INTO $SUGAR_TABLE (
         datetime, sugar, comment) VALUES (
-        'now', $SUGAR, '$COMMENT');"
+        'now', $_SUGAR, '$_COMMENT');"
 			
-      COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
-      $COMMAND -c "$QUERY";
+      _COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+      $_COMMAND -c "$_QUERY";
     ;;
   * )
 			log "Only sqlite and pgsql is supported right now.";
@@ -159,9 +217,20 @@ sugar() {
 }
 
 ##############################################
-# initializes database from given init file. #
+# Initializes database from given init file.
+# Globals:
+#   DB_ENGINE
+#   DATABASE_NAME
+#   DATABASE_USER
+#   DATABASE_PASSWD
+#   DATABASE_HOST
+#   DATABASE_PORT
+#   BLOOD_TABLE
+#   PGSQL
+#   SQLITE
+#   INIT_FILENAME
 ##############################################
-init() {
+function init() {
 	case $DB_ENGINE in
 		"sqlite" )
 			# TODO: validate
@@ -177,14 +246,25 @@ init() {
 	esac
 }
 
-##############################################
-# imports data from .csv file into database. #
-# $1=DB_ENGINE                               #
-# $2=IMPORT_BLOOD
-##############################################
-import_blood() {
-	_ENGINE=$1
-	_FILE=$2
+#######################################################
+# Imports pressure data from .csv file into database.
+# Globals:
+#   DB_ENGINE
+#   DATABASE_NAME
+#   DATABASE_USER
+#   DATABASE_PASSWD
+#   DATABASE_HOST
+#   DATABASE_PORT
+#   BLOOD_TABLE
+#   PGSQL
+#   SQLITE
+# Attributes:
+#   ENGINE
+#   IMPORT_FILENAME
+########################################################
+function import_pressure() {
+	readonly _ENGINE=$1
+	readonly _FILE=$2
 
 	echo "Importing $_ENGINE from $_FILE";
 
@@ -196,21 +276,38 @@ import_blood() {
 		"pgsql" )
 			log "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
 			log "-c \"\\COPY tmp_$BLOOD_TABLE(datetime, systolic, diastolic, pulse, comment) FROM $_FILE DELIMITER ',' CSV\";";
-			COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
+			_COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
 
-			$COMMAND -c "CREATE TABLE tmp_$BLOOD_TABLE AS TABLE $BLOOD_TABLE;";
-			$COMMAND -c "\\COPY tmp_$BLOOD_TABLE(datetime, systolic, diastolic, pulse, comment) FROM $_FILE DELIMITER ',' CSV;";
-			$COMMAND -c "INSERT INTO $BLOOD_TABLE(datetime, systolic, diastolic, pulse, comment) SELECT datetime, systolic, diastolic, pulse, comment FROM tmp_$BLOOD_TABLE ON CONFLICT DO NOTHING;";
-			$COMMAND -c "DROP TABLE tmp_$BLOOD_TABLE;";
+			$_COMMAND -c "CREATE TABLE tmp_$BLOOD_TABLE AS TABLE $BLOOD_TABLE;";
+			$_COMMAND -c "\\COPY tmp_$BLOOD_TABLE(datetime, systolic, diastolic, pulse, comment) FROM $_FILE DELIMITER ',' CSV;";
+			$_COMMAND -c "INSERT INTO $BLOOD_TABLE(datetime, systolic, diastolic, pulse, comment) SELECT datetime, systolic, diastolic, pulse, comment FROM tmp_$BLOOD_TABLE ON CONFLICT DO NOTHING;";
+			$_COMMAND -c "DROP TABLE tmp_$BLOOD_TABLE;";
 
 		;;
 		* ) ;;
 	esac
 }
 
-import_sugar() {
-  _ENGINE=$1
-  _FILE=$2
+
+#######################################################
+# Imports sugar data from .csv file into database.
+# Globals:
+#   DB_ENGINE
+#   DATABASE_NAME
+#   DATABASE_USER
+#   DATABASE_PASSWD
+#   DATABASE_HOST
+#   DATABASE_PORT
+#   SUGAR_TABLE
+#   PGSQL
+#   SQLITE
+# Attributes:
+#   ENGINE
+#   IMPORT_FILENAME
+########################################################
+function import_sugar() {
+  readonly _ENGINE=$1
+  readonly _FILE=$2
 
 	echo "Importing $_ENGINE from $_FILE";
 
@@ -234,32 +331,42 @@ import_sugar() {
 	esac
 }
 
-###################################################################
-# synchronize local sqlite database with postgresql or vice versa #
-###################################################################
-sync() {
-	_SOURCE=$(echo "$OPTION_SYNC" | awk -F ':' '{print $1}');
-	_DESTINATION=$(echo "$OPTION_SYNC" | awk -F ':' '{print $2}');
+#####################################################
+# Synchronize local sqlite database with postgresql
+# Globals:
+#   DB_ENGINE
+#   DATABASE_NAME
+#   DATABASE_USER
+#   DATABASE_PASSWD
+#   DATABASE_HOST
+#   DATABASE_PORT
+#   SUGAR_TABLE
+#   PGSQL
+#   SQLITE
+#####################################################
+function sync() {
+	readonly _SOURCE=$(echo "$OPTION_SYNC" | awk -F ':' '{print $1}');
+	readonly _DESTINATION=$(echo "$OPTION_SYNC" | awk -F ':' '{print $2}');
 
 	log "Syncing $_SOURCE to $_DESTINATION";
 
 	case $_SOURCE in
 		"sqlite" )
-			TMP_FILE=$(mktemp -q)
-			if [ ! -f "$TMP_FILE" ]; then
+			_TMP_FILE=$(mktemp -q)
+			if [ ! -f "$_TMP_FILE" ]; then
     		log "$0: Can't create temp file, bye..."
     		exit 1
 			fi
 
-			$SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, systolic, diastolic, pulse, comment FROM $BLOOD_TABLE;" > "$TMP_FILE";
+			$SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, systolic, diastolic, pulse, comment FROM $BLOOD_TABLE;" > "$_TMP_FILE";
 
-			import_blood "$_DESTINATION" "$TMP_FILE";
+			import_pressure "$_DESTINATION" "$_TMP_FILE";
 
-      $SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, sugar, comment FROM $SUGAR_TABLE;" > "$TMP_FILE";
+      $SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, sugar, comment FROM $SUGAR_TABLE;" > "$_TMP_FILE";
 
-      import_sugar "$_DESTINATION" "$TMP_FILE";
+      import_sugar "$_DESTINATION" "$_TMP_FILE";
 			
-			rm "$TMP_FILE";
+			rm "$_TMP_FILE";
 		;;
 		"pgsql" )
 			log "Feature not implemented yet, only sqlite:pgsql is supported";
@@ -269,65 +376,68 @@ sync() {
 
 }
 
-
 ######################################################################################
-# pwd
-#ls -al blood.properties
-BLOOD_PROPERTIES=blood.properties
+# Main function
+######################################################################################
+function main() {
+  readonly _BLOOD_PROPERTIES=blood.properties
 
-source $BLOOD_PROPERTIES
+  source $_BLOOD_PROPERTIES;
 
-if [ $# -eq 0 ]; then
-	helpme
-fi
+  if [ $# -eq 0 ]; then
+	  helpme
+  fi
 
-echo "Using: $BLOOD_PROPERTIES";
+  echo "Using: $_BLOOD_PROPERTIES";
 
-while true; do
-	case "$1" in
-    -d | --debug ) DEBUG="true"; shift 2 ;;
-		-D | --dbname ) DATABASE_NAME=$2; shift 2 ;;
-		-e | --engine ) DB_ENGINE=$2; shift 2 ;;
-		-h | --help ) helpme; shift ;;
-		-H | --host ) DATABASE_HOST=$2; shift 2 ;;
-		-i | --initialize ) INIT_FILENAME=$2; shift 2 ;;
-    -p | --pressure ) OPTION_PRESSURE=$2; shift 2 ;;
-		-P | --import-pressure ) IMPORT_BLOOD=$2; shift 2 ;;
-		-q | --query ) OPTION_QUERY=$2; shift 2 ;;
-    -s | --sugar ) OPTION_SUGAR=$2; shift 2 ;;
-    -S | --import-sugar ) IMPORT_SUGAR=$s; shift 2 ;;
-		-X | --sync ) OPTION_SYNC=$2; shift 2 ;;
-		-U | --user ) USER=$2; shift 2 ;;
-		-- ) shift; break ;;
-		* ) break ;;
-	esac
-done
+  while true; do
+    case "$1" in
+      -d | --debug ) readonly DEBUG="true"; shift 2 ;;
+      -D | --dbname ) readonly DATABASE_NAME=$2; shift 2 ;;
+      -e | --engine ) readonly DB_ENGINE=$2; shift 2 ;;
+      -h | --help ) helpme;;
+      -H | --host ) readonly DATABASE_HOST=$2; shift 2 ;;
+      -i | --initialize ) readonly INIT_FILENAME=$2; shift 2 ;;
+      -p | --pressure ) readonly OPTION_PRESSURE=$2; shift 2 ;;
+      -P | --import-pressure ) readonly IMPORT_PRESSURE=$2; shift 2 ;;
+      -q | --query ) readonly OPTION_QUERY=$2; shift 2 ;;
+      -s | --sugar ) readonly OPTION_SUGAR=$2; shift 2 ;;
+      -S | --import-sugar ) readonly IMPORT_SUGAR=$2; shift 2 ;;
+      -X | --sync ) readonly OPTION_SYNC=$2; shift 2 ;;
+      -U | --user ) readonly USER=$2; shift 2 ;;
+      -- ) shift; break ;;
+      * ) break ;;
+    esac
+  done
 
-if [ "$INIT_FILENAME" != "" ]; then
-	init "$INIT_FILENAME";
-fi
+  if [ "$INIT_FILENAME" != "" ]; then
+    init "$INIT_FILENAME";
+  fi
 
-if [ "$IMPORT_BLOOD" != "" ]; then
-	import_blood "$DB_ENGINE" "$IMPORT_BLOOD";
-fi
+  if [ "$IMPORT_PRESSURE" != "" ]; then
+    import_pressure "$DB_ENGINE" "$IMPORT_PRESSURE";
+  fi
 
-if [ "$IMPORT_SUGAR" != "" ]; then
-	import_sugar "$DB_ENGINE" "$IMPORT_SUGAR";
-fi
+  if [ "$IMPORT_SUGAR" != "" ]; then
+    import_sugar "$DB_ENGINE" "$IMPORT_SUGAR";
+  fi
 
-if [ "$OPTION_PRESSURE" != "" ]; then
-	add "$OPTION_PRESSURE";
-fi
+  if [ "$OPTION_PRESSURE" != "" ]; then
+    pressure_add "$OPTION_PRESSURE";
+  fi
 
-if [ "$OPTION_SUGAR" ]; then
-  sugar "$OPTION_SUGAR";
-fi
+  if [ "$OPTION_SUGAR" ]; then
+    sugar_add "$OPTION_SUGAR";
+  fi
 
-if [ "$OPTION_SYNC" != "" ]; then
-	sync "$OPTION_SYNC";
-fi
+  if [ "$OPTION_SYNC" != "" ]; then
+    sync "$OPTION_SYNC";
+  fi
 
-if [ "$OPTION_QUERY" != "" ]; then
-	query "$OPTION_QUERY";
-fi
+  if [ "$OPTION_QUERY" != "" ]; then
+    query "$OPTION_QUERY";
+  fi
 
+}
+
+main "$@";
