@@ -26,7 +26,7 @@ $ cp blood_template.properties blood.properties
 Edit blood.properties according to your needs (database access :arrow_down:).
 
 #### Initialize database:
-- sqlite (:notes: note that sqlite3 database is default one so there is no need to use option -e sqlite)
+- sqlite (:bulb: note that sqlite3 database is default one so there is no need to use option -e sqlite)
 ````
 ./blood.sh -i createdb.sqlite
 ````
@@ -108,13 +108,13 @@ OPTIONS include:
 -D --dbname DATABASE_NAME      database name
 -e --engine DATABASE_ENGINE    database engine can be either sqlite or pgsql
 -h --help                      help screen
+-H --host DATABASE_HOST        database host
 -i --initialize INIT_FILENAME  initialize filename
 -p --pressure MEASUREMENT      blood pressure measurement in format of eg.: 120/80/90/'comment'
 (systolic/diastolic/pulse/'comment') where comment is optional
 -q --query QUERY               SQL query provided to sqlite database (query should correspond with engine -e option)
 -s --sugar SUGAR_LEVEL         sugar level in blood in mg/dL
 -t --table TABLENAME           table name in database, blood by default
--u --url URL                   database url
 -U --user USERNAME             database user name
 -X --sync SOURCE:DESTINATION   synchronize databases (copy data from SOURCE to DESTINATION database
 either SOURCE or DESTINATION may be: sqlite, pgsql
