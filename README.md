@@ -114,11 +114,27 @@ OPTIONS include:
 (systolic/diastolic/pulse/'comment') where comment is optional
 -q --query QUERY               SQL query provided to sqlite database (query should correspond with engine -e option)
 -s --sugar SUGAR_LEVEL         sugar level in blood in mg/dL
--t --table TABLENAME           table name in database, blood by default
 -U --user USERNAME             database user name
 -X --sync SOURCE:DESTINATION   synchronize databases (copy data from SOURCE to DESTINATION database
 either SOURCE or DESTINATION may be: sqlite, pgsql
 ````
+
+### Example usage
+#### Store blood pressure to sqlite database:
+````
+$ ./blood.sh -p 120/80/80
+````
+
+#### Store sugar level to sqlite database:
+````
+$ ./blood.sh -s 95
+````
+
+#### Synchronize local sqlite database with postgresql
+````
+$ blood.sh -X sqlite:pgsql
+````
+
 
 ### Web interface
 Not implemented yet, see TODO section
