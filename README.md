@@ -1,16 +1,16 @@
 # BPS2 - Blood Parameters Storage System
 
-## Description
-BPS2 is a simple command line interface to store previous measured blood parameters such as pressure 
+BPS2 is a simple command line interface written in bash to store previous measured blood parameters such as pressure 
 (diastolic, systolic and pulse) and sugar level. By default, data is stored in sqlite file named blood.db in local 
 directory. There is possibility to synchronize blood.db with postgresql server.
 
 ## Installation
 
 ### Prerequisites
-Install database engines on your local machine:
+
 - [sqlite3](https://www.sqlite.org/)
 - [postgresql](https://www.postgresql.org/) (:hand: optional)
+- [bash](https://www.gnu.org/software/bash/)
 
 ### Install BPS2
 
@@ -132,7 +132,7 @@ $ ./blood.sh -s 95
 
 #### Synchronize local sqlite database with postgresql
 ````
-$ blood.sh -X sqlite:pgsql
+$ ./blood.sh -X sqlite:pgsql
 ````
 
 

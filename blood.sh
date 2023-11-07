@@ -24,7 +24,6 @@ function helpme() {
 	echo "                               (systolic/diastolic/pulse/'comment') where comment is optional";
 	echo "-q --query QUERY               SQL query provided to sqlite database (query should correspond with engine -e option)";
   echo "-s --sugar SUGAR_LEVEL         sugar level in blood in mg/dL";
-  echo "-t --table TABLENAME           table name in database, blood by default";
 	echo "-U --user USERNAME             database user name";
 	echo "-X --sync SOURCE:DESTINATION   synchronize databases (copy data from SOURCE to DESTINATION database";
 	echo "                               either SOURCE or DESTINATION may be: sqlite, pgsql";
@@ -174,7 +173,7 @@ function pressure_add() {
 #   DATABASE_PASSWD
 #   DATABASE_HOST
 #   DATABASE_PORT
-#   BLOOD_TABLE
+#   SUGAR_TABLE
 #   PGSQL
 #   SQLITE
 # Arguments:
@@ -190,7 +189,7 @@ function sugar_add() {
 		_COMMENT=$(echo "$_MEASUREMENT" | awk -F '/' '{print $2}')
   fi
 
-  log "Sugar: \"_$SUGAR\"";
+  log "Sugar: \"$_SUGAR\"";
 
   if ! [[ "$_SUGAR" =~ ^[0-9]+$ ]] ; then fail "sugar" "$_SUGAR"; fi
 
@@ -225,7 +224,6 @@ function sugar_add() {
 #   DATABASE_PASSWD
 #   DATABASE_HOST
 #   DATABASE_PORT
-#   BLOOD_TABLE
 #   PGSQL
 #   SQLITE
 #   INIT_FILENAME
@@ -340,6 +338,7 @@ function import_sugar() {
 #   DATABASE_PASSWD
 #   DATABASE_HOST
 #   DATABASE_PORT
+#   BLOOD_TABLE
 #   SUGAR_TABLE
 #   PGSQL
 #   SQLITE
@@ -388,8 +387,6 @@ function main() {
 	  helpme
   fi
 
-  echo "Using: $_BLOOD_PROPERTIES";
-
   while true; do
     case "$1" in
       -d | --debug ) readonly DEBUG="true"; shift 2 ;;
@@ -412,32 +409,42 @@ function main() {
 
   if [ "$INIT_FILENAME" != "" ]; then
     init "$INIT_FILENAME";
-  fi
 
-  if [ "$IMPORT_PRESSURE" != "" ]; then
+  elif [ "$IMPORT_PRESSURE" != "" ]; then
     import_pressure "$DB_ENGINE" "$IMPORT_PRESSURE";
-  fi
 
-  if [ "$IMPORT_SUGAR" != "" ]; then
+  elif [ "$IMPORT_SUGAR" != "" ]; then
     import_sugar "$DB_ENGINE" "$IMPORT_SUGAR";
-  fi
 
-  if [ "$OPTION_PRESSURE" != "" ]; then
+  elif [ "$OPTION_PRESSURE" != "" ]; then
     pressure_add "$OPTION_PRESSURE";
-  fi
 
-  if [ "$OPTION_SUGAR" ]; then
+  elif [ "$OPTION_SUGAR" ]; then
     sugar_add "$OPTION_SUGAR";
-  fi
 
-  if [ "$OPTION_SYNC" != "" ]; then
+  elif [ "$OPTION_SYNC" != "" ]; then
     sync "$OPTION_SYNC";
-  fi
 
-  if [ "$OPTION_QUERY" != "" ]; then
+  elif [ "$OPTION_QUERY" != "" ]; then
     query "$OPTION_QUERY";
+
+  else
+    echo
+    echo "ERROR: Not enough parameters!"
+    echo
+    helpme;
   fi
 
 }
+
+# ensure we're running in bash
+SHELL=$(readlink /proc/$$/exe | awk -F '/' '{print $NF}')
+
+if [ "$SHELL" != "bash" ]; then
+  echo "$_ -> $(readlink "$_")";
+  echo "Please use bash instead of $SHELL :";
+  echo "\$ ./$0";
+  echo "\$ bash $0";
+fi;
 
 main "$@";
