@@ -113,7 +113,8 @@ OPTIONS include:
 -p --pressure MEASUREMENT      blood pressure measurement in format of eg.: 120/80/90/'comment'
 (systolic/diastolic/pulse/'comment') where comment is optional
 -q --query QUERY               SQL query provided to sqlite database (query should correspond with engine -e option)
--s --sugar SUGAR_LEVEL         sugar level in blood in mg/dL
+-s --sugar SUGAR_LEVEL         sugar level in blood in mg/dL in format of eg.: 123/'comment'
+                               where 'comment' is optional
 -U --user USERNAME             database user name
 -X --sync SOURCE:DESTINATION   synchronize databases (copy data from SOURCE to DESTINATION database
 either SOURCE or DESTINATION may be: sqlite, pgsql
@@ -122,12 +123,14 @@ either SOURCE or DESTINATION may be: sqlite, pgsql
 ### Example usage
 #### Store blood pressure to sqlite database:
 ````
-$ ./blood.sh -p 120/80/80
+$ ./blood.sh -p 120/80/80/'after jogging'
+$ ./blood.sh -p 120/80/80/
 ````
 
 #### Store sugar level to sqlite database:
 ````
-$ ./blood.sh -s 95
+$ ./blood.sh -s 95/'2 hours after lunch'
+$ ./blood.sh -s 95/
 ````
 
 #### Synchronize local sqlite database with postgresql
@@ -168,7 +171,7 @@ bats  blood.bats  test_helper
 
 ### Run tests
 ```
-$ ./blood_tests.sh
+$ ./run_blood_tests.sh
 ```
 
 ## Known bugs
@@ -176,7 +179,6 @@ $ ./blood_tests.sh
 
 ## TODO
 - add units option to _blood_template.properties_ so user can specify unit of value he provide to system
-- add comment feature to CLI for sugar input (-s 110/'my comment')
 - add feature to store urine acid
 - add feature to store cholesterol level
 - add web interface with features like:
@@ -184,7 +186,7 @@ $ ./blood_tests.sh
     - input data manually
     - visualise data with various graphs
   - REST interface
-- login page, and support for multiple users, accounts
+  - support for multiple users, accounts, login page
 - import data from various number of file format:
   - json
   - xml

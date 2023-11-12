@@ -23,7 +23,8 @@ function helpme() {
 	echo "-p --pressure MEASUREMENT      blood pressure measurement in format of eg.: 120/80/90/'comment'";
 	echo "                               (systolic/diastolic/pulse/'comment') where comment is optional";
 	echo "-q --query QUERY               SQL query provided to sqlite database (query should correspond with engine -e option)";
-  echo "-s --sugar SUGAR_LEVEL         sugar level in blood in mg/dL";
+  echo "-s --sugar SUGAR_LEVEL         sugar level in blood in mg/dL using format of eg.: 123/'comment'";
+  echo "                               where 'comment' is optional";
 	echo "-U --user USERNAME             database user name";
 	echo "-X --sync SOURCE:DESTINATION   synchronize databases (copy data from SOURCE to DESTINATION database";
 	echo "                               either SOURCE or DESTINATION may be: sqlite, pgsql";
