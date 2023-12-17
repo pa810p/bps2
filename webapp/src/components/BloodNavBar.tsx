@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography';
 import Menu from '@mui/material/Menu';
 import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
-import Avatar from '@mui/material/Avatar';
+// import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
@@ -78,6 +78,7 @@ i18n
     });
 
 export const renderBloodNavBar = () => {
+    console.log("renderBloodNavBar")
     const { t } = useTranslation('translation')
 
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
@@ -102,6 +103,7 @@ export const renderBloodNavBar = () => {
         <AppBar position="static">
             <Container maxWidth="xl">
                 <Toolbar disableGutters>
+                    {/*
                     <Typography
                         variant="h6"
                         noWrap
@@ -110,8 +112,8 @@ export const renderBloodNavBar = () => {
                     >
                         LOGO
                     </Typography>
-
-                    <Box sx={{ flexGrow: 0, display: { xs: 'flex', md: 'none' } }}>
+                    */}
+                    <Box sx={{ flexGrow: 0, display: { xs: 'flex', md: 'flex' } }}>
                         <IconButton
                             size="large"
                             aria-label="account of current user"
@@ -140,13 +142,20 @@ export const renderBloodNavBar = () => {
                                 display: { xs: 'block', md: 'none' },
                             }}
                         >
-                            {
+                            
                             <MenuItem onClick={handleCloseNavMenu}>
                                 <Typography textAlign="center">
                                     <Link style={{ textDecoration: "none", color: "white" }} to="/">{t("BPS2")}</Link>
                                 </Typography>
                             </MenuItem>
-                            /*pages.map((page) => (
+
+                            <MenuItem onClick={handleCloseNavMenu}>
+                                <Typography textAlign="center">
+                                    <Link style={{ textDecoration: "none", color: "white" }} to="/pressure">{t("pressure")}</Link>
+                                </Typography>
+                            </MenuItem>
+                            
+                            {/*pages.map((page) => (
                                 <MenuItem key={page} onClick={handleCloseNavMenu}>
                                     <Typography textAlign="center">
                                         <Link style={{ textDecoration: "none", color: "white" }} to="{page}">{page}</Link>
@@ -166,8 +175,8 @@ export const renderBloodNavBar = () => {
                             <Link style={{ textDecoration: "none", color: "white" }} to="sugar">{t("sugar")}</Link>
                         </Typography>
                     </MenuItem>
-
-                    {/* <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+                    {/*
+                    <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
                         {pages.map((page) => (
                             <Button
                                 key={page}
@@ -177,7 +186,8 @@ export const renderBloodNavBar = () => {
                                 <Link style={{ textDecoration: "none", color: "white" }} to="/${page}">{page}</Link>
                             </Button>
                         ))}
-                    </Box> */}
+                    </Box>
+                        */}
                     <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'flex' } }} />
                     <Box>
                         <PopupState variant="popover" popupId="demo-popup-menu">
