@@ -345,8 +345,10 @@ function import_sugar() {
 #   SQLITE
 #####################################################
 function sync() {
-	readonly _SOURCE=$(echo "$OPTION_SYNC" | awk -F ':' '{print $1}');
-	readonly _DESTINATION=$(echo "$OPTION_SYNC" | awk -F ':' '{print $2}');
+	 _SOURCE=$(echo "$OPTION_SYNC" | awk -F ':' '{print $1}');
+	readonly _SOURCE
+	_DESTINATION=$(echo "$OPTION_SYNC" | awk -F ':' '{print $2}');
+  readonly _DESTINATION
 
 	log "Syncing $_SOURCE to $_DESTINATION";
 
@@ -380,9 +382,18 @@ function sync() {
 # Main function
 ######################################################################################
 function main() {
-  readonly _BLOOD_PROPERTIES=blood.properties
+  readonly _BLOOD_PROPERTIES=./blood.properties
+  DIRNAME=$(dirname ${BASH_SOURCE[0]})
+  log "Trying to use $DIRNAME/blood.properties"
 
-  source $_BLOOD_PROPERTIES;
+  source "$DIRNAME/$_BLOOD_PROPERTIES"
+
+  if [ $# -eq 0 ]; then
+    source ~/.bps2/blood.properties
+    DIRNAME="$HOME/.bps2/";
+    log "Using sqlite databese: $DIRNAME/$DATABASE_NAME.db";
+    DATABASE_NAME="$DIRNAME/$DATABASE_NAME"
+  fi
 
   if [ $# -eq 0 ]; then
 	  helpme
@@ -408,6 +419,11 @@ function main() {
     esac
   done
 
+  case "$DB_ENGINE" in
+    sqlite ) echo "Using sqlite database name: $DATABASE_NAME"; shift 2 ;;
+    pgsql ) echo "Using postgresql engine with name: $DATABASE_NAME"; shift 2 ;;
+  esac
+
   if [ "$INIT_FILENAME" != "" ]; then
     init "$INIT_FILENAME";
 
@@ -430,9 +446,9 @@ function main() {
     query "$OPTION_QUERY";
 
   else
-    echo
-    echo "ERROR: Not enough parameters!"
-    echo
+    log
+    log "ERROR: Not enough parameters!"
+    log
     helpme;
   fi
 
