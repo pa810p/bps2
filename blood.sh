@@ -8,10 +8,13 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
+VERSION=1.0.0-20231222
+
 ######################################
 # Displays Usage information and exit
 ######################################
 function helpme() {
+  echo "Version: $VERSION";
 	echo "Usage: $0 [OPTIONS]";
 	echo "OPTIONS include:";
   echo "-d --debug                     shows more detailed debug information";
@@ -21,11 +24,14 @@ function helpme() {
 	echo "-H --host DATABASE_HOST        database host";
 	echo "-i --initialize INIT_FILENAME  initialize filename";
 	echo "-p --pressure MEASUREMENT      blood pressure measurement in format of eg.: 120/80/90/'comment'";
+	echo "-P --import_pressure FILENAME  import pressure";
 	echo "                               (systolic/diastolic/pulse/'comment') where comment is optional";
 	echo "-q --query QUERY               SQL query provided to sqlite database (query should correspond with engine -e option)";
   echo "-s --sugar SUGAR_LEVEL         sugar level in blood in mg/dL using format of eg.: 123/'comment'";
   echo "                               where 'comment' is optional";
+  echo "-S --import-sugar FILENAME     import sugar";
 	echo "-U --user USERNAME             database user name";
+	echo "-v --version                   displays version information and exits";
 	echo "-X --sync SOURCE:DESTINATION   synchronize databases (copy data from SOURCE to DESTINATION database";
 	echo "                               either SOURCE or DESTINATION may be: sqlite, pgsql";
 	echo "";
@@ -34,6 +40,15 @@ function helpme() {
   echo "./blood.sh -p 123/80/90/'my fancy comment'";
 	exit 0;
 }
+
+######################################
+# Displays Version information and exit
+######################################
+function version() {
+  log $VERSION
+  exit 0;
+}
+
 
 ###############################################
 # Displays reason of failure, usage and exits
@@ -401,8 +416,9 @@ function main() {
       -q | --query ) readonly OPTION_QUERY=$2; shift 2 ;;
       -s | --sugar ) readonly OPTION_SUGAR=$2; shift 2 ;;
       -S | --import-sugar ) readonly IMPORT_SUGAR=$2; shift 2 ;;
-      -X | --sync ) readonly OPTION_SYNC=$2; shift 2 ;;
       -U | --user ) readonly USER=$2; shift 2 ;;
+      -v | --version ) version;;
+      -X | --sync ) readonly OPTION_SYNC=$2; shift 2 ;;
       -- ) shift; break ;;
       * ) break ;;
     esac
