@@ -101,23 +101,31 @@ Executing query: SELECT * FROM blood;
 
 ````
 $ ./blood.sh
-
+Trying to use ./blood.properties
+Using sqlite database: /home/pablo/.bps2//blood.db
+Version: 1.0.1-20231224
 Usage: ./blood.sh [OPTIONS]
 OPTIONS include:
--d --debug                     shows more detailed debug information
--D --dbname DATABASE_NAME      database name
--e --engine DATABASE_ENGINE    database engine can be either sqlite or pgsql
--h --help                      help screen
--H --host DATABASE_HOST        database host
--i --initialize INIT_FILENAME  initialize filename
--p --pressure MEASUREMENT      blood pressure measurement in format of eg.: 120/80/90/'comment'
-(systolic/diastolic/pulse/'comment') where comment is optional
--q --query QUERY               SQL query provided to sqlite database (query should correspond with engine -e option)
--s --sugar SUGAR_LEVEL         sugar level in blood in mg/dL in format of eg.: 123/'comment'
-                               where 'comment' is optional
--U --user USERNAME             database user name
--X --sync SOURCE:DESTINATION   synchronize databases (copy data from SOURCE to DESTINATION database
-either SOURCE or DESTINATION may be: sqlite, pgsql
+-d --debug                         shows more detailed debug information
+-D --dbname DATABASE_NAME          database name
+-e --engine DATABASE_ENGINE        database engine can be either sqlite or pgsql
+-h --help                          help screen
+-H --host DATABASE_HOST            database host
+-i --initialize INIT_FILENAME      initialize filename
+-l [LIST_ENTRIES]                  list last LIST_ENTRIES (default from properties) entries of both pressure and sugar
+   --list-pressure [LIST_ENTRIES]  list last LIST ENTRIES (default from properties) entries of pressure
+   --list-sugar [LIST_ENTRIES]     list last LIST_ENTRIES (default from properties) entries of sugar
+-p --pressure MEASUREMENT          blood pressure measurement in format of eg.: 120/80/90/'comment'
+-P --import_pressure FILENAME      import pressure
+                                   (systolic/diastolic/pulse/'comment') where comment is optional
+-q --query QUERY                   SQL query provided to sqlite database (query should correspond with engine -e option)
+-s --sugar SUGAR_LEVEL             sugar level in blood in mg/dL using format of eg.: 123/'comment'
+                                   where 'comment' is optional
+-S --import-sugar FILENAME         import sugar
+-U --user USERNAME                 database user name
+-v --version                       displays version information and exits
+-X --sync SOURCE:DESTINATION       synchronize databases (copy data from SOURCE to DESTINATION database
+                                   either SOURCE or DESTINATION may be: sqlite, pgsql
 ````
 
 ### Example usage

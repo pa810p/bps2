@@ -284,3 +284,256 @@ init_pgsql_database() {
   assert_output --partial "      133 |        83 |    83 |";
 }
 
+# add sample pressure entries to blood table
+prepare_sample_pressure() {
+  run $BLOOD -p 100/80/81/'first pressure'
+  run $BLOOD -p 100/80/82/'second pressure'
+  run $BLOOD -p 100/80/83/'third pressure'
+  run $BLOOD -p 100/80/84/'fourth pressure'
+}
+
+# add sample sugar entries to sugar table
+prepare_sample_sugar() {
+  run $BLOOD -s 201/'first sugar'
+  run $BLOOD -s 202/'second sugar'
+  run $BLOOD -s 203/'third sugar'
+  run $BLOOD -s 204/'fourth sugar'
+}
+
+@test "should query 2 pressure and sugar entries on sqlite" {
+  init_sqlite_database;
+
+  prepare_sample_pressure
+  prepare_sample_sugar
+
+  result="$(run $BLOOD -l 2)"
+
+  grep -q "100|80|84|fourth pressure" <<< "$result"
+  grep -q "100|80|83|third pressure" <<< "$result"
+  ! grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+
+  grep -q "204|fourth sugar" <<< "$result"
+  grep -q "203|third sugar" <<< "$result"
+  ! grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+}
+
+@test "should query default pressure and sugar entries on sqlite" {
+  init_sqlite_database
+
+  prepare_sample_pressure
+  prepare_sample_sugar
+
+  result="$(run $BLOOD -l)"
+
+  grep -q "100|80|84|fourth pressure" <<< "$result"
+  grep -q "100|80|83|third pressure" <<< "$result"
+  grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+
+  grep -q "204|fourth sugar" <<< "$result"
+  grep -q "203|third sugar" <<< "$result"
+  grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+}
+
+@test "should query 2 pressure and no sugar entries on sqlite" {
+  init_sqlite_database
+
+  prepare_sample_pressure
+  prepare_sample_sugar
+
+  result="$(run $BLOOD --list-pressure 2)"
+
+  grep -q "100|80|84|fourth pressure" <<< "$result"
+  grep -q "100|80|83|third pressure" <<< "$result"
+  ! grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+  ! grep -q "204|fourth sugar" <<< "$result"
+  ! grep -q "203|third sugar" <<< "$result"
+  ! grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+}
+
+@test "should query default pressure and no sugar entries on sqlite" {
+  init_sqlite_database
+
+  prepare_sample_pressure
+  prepare_sample_sugar
+
+  result="$(run $BLOOD --list-pressure)"
+
+  grep -q "100|80|84|fourth pressure" <<< "$result"
+  grep -q "100|80|83|third pressure" <<< "$result"
+  grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+  ! grep -q "204|fourth sugar" <<< "$result"
+  ! grep -q "203|third sugar" <<< "$result"
+  ! grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+}
+
+
+@test "should query no pressure and 2 sugar entries on sqlite" {
+  init_sqlite_database
+
+  prepare_sample_pressure
+  prepare_sample_sugar
+
+  result="$(run $BLOOD --list-sugar 2)"
+
+
+  ! grep -q "100|80|84|fourth pressure" <<< "$result"
+  ! grep -q "100|80|83|third pressure" <<< "$result"
+  ! grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+  grep -q "204|fourth sugar" <<< "$result"
+  grep -q "203|third sugar" <<< "$result"
+  ! grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+}
+
+@test "should query no pressure and default sugar entries on sqlite" {
+  init_sqlite_database
+
+  prepare_sample_pressure
+  prepare_sample_sugar
+
+  result="$(run $BLOOD --list-sugar)"
+
+  ! grep -q "100|80|84|fourth pressure" <<< "$result"
+  ! grep -q "100|80|83|third pressure" <<< "$result"
+  ! grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+  grep -q "204|fourth sugar" <<< "$result"
+  grep -q "203|third sugar" <<< "$result"
+  grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+}
+
+@test "should query 2 pressure and sugar entries on pgsql" {
+  init_pgsql_database;
+
+  prepare_sample_pressure
+  prepare_sample_sugar
+
+  result="$(run $BLOOD -l 2)"
+
+  grep -q "100|80|84|fourth pressure" <<< "$result"
+  grep -q "100|80|83|third pressure" <<< "$result"
+  ! grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+
+  grep -q "204|fourth sugar" <<< "$result"
+  grep -q "203|third sugar" <<< "$result"
+  ! grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+}
+
+@test "should query default pressure and sugar entries on pgsql" {
+  init_pgsql_database;
+
+  prepare_sample_pressure
+  prepare_sample_sugar
+
+  result="$(run $BLOOD -l)"
+
+  grep -q "100|80|84|fourth pressure" <<< "$result"
+  grep -q "100|80|83|third pressure" <<< "$result"
+  grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+
+  grep -q "204|fourth sugar" <<< "$result"
+  grep -q "203|third sugar" <<< "$result"
+  grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+}
+
+
+@test "should query 2 pressure and no sugar entries on pgsql" {
+  init_pgsql_database
+
+  prepare_sample_pressure
+  prepare_sample_sugar
+
+  result="$(run $BLOOD --list-pressure 2)"
+
+  grep -q "100|80|84|fourth pressure" <<< "$result"
+  grep -q "100|80|83|third pressure" <<< "$result"
+  ! grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+  ! grep -q "204|fourth sugar" <<< "$result"
+  ! grep -q "203|third sugar" <<< "$result"
+  ! grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+}
+
+@test "should query default pressure and no sugar entries on pgsql" {
+  init_pgsql_database
+
+  prepare_sample_pressure
+  prepare_sample_sugar
+
+  result="$(run $BLOOD --list-pressure)"
+
+  grep -q "100|80|84|fourth pressure" <<< "$result"
+  grep -q "100|80|83|third pressure" <<< "$result"
+  grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+  ! grep -q "204|fourth sugar" <<< "$result"
+  ! grep -q "203|third sugar" <<< "$result"
+  ! grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+}
+
+
+@test "should query no pressure and 2 sugar entries on pgsql" {
+  init_pgsql_database
+
+  prepare_sample_pressure
+  prepare_sample_sugar
+
+  result="$(run $BLOOD --list-sugar 2)"
+
+  ! grep -q "100|80|84|fourth pressure" <<< "$result"
+  ! grep -q "100|80|83|third pressure" <<< "$result"
+  ! grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+  grep -q "204|fourth sugar" <<< "$result"
+  grep -q "203|third sugar" <<< "$result"
+  ! grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+}
+
+@test "should query no pressure and default sugar entries on pgsql" {
+  init_pgsql_database
+
+  prepare_sample_pressure
+  prepare_sample_sugar
+
+  result="$(run $BLOOD --list-sugar)"
+
+  ! grep -q "100|80|84|fourth pressure" <<< "$result"
+  ! grep -q "100|80|83|third pressure" <<< "$result"
+  ! grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+  grep -q "204|fourth sugar" <<< "$result"
+  grep -q "203|third sugar" <<< "$result"
+  grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+}
+
+
