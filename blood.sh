@@ -41,7 +41,6 @@ function helpme() {
 	echo "Example: ";
 	echo "./blood.sh -e pgsql -i createdb.sql";
   echo "./blood.sh -p 123/80/90/'my fancy comment'";
-	exit 0;
 }
 
 ######################################
@@ -62,6 +61,7 @@ function version() {
 function fail() {
   echo "Invalid parameter: $1: \"$2\" aborting!";
   helpme;
+  exit 1;
 }
 
 ############################
@@ -167,6 +167,7 @@ function pressure_add() {
 
 	if [ "$_MEASUREMENT" = "" ] ; then
 		helpme
+		exit 1;
 	else
 		# parsing 120/80/90/'optional comment' like measurement input
 		_SYSTOLIC=$(echo "$_MEASUREMENT" | awk -F '/' '{print $1}')
@@ -231,6 +232,7 @@ function sugar_add() {
   
   if [ "$_MEASUREMENT" = "" ] ; then
     helpme
+    exit 1;
   else
     _SUGAR=$(echo "$_MEASUREMENT" | awk -F '/' '{print $1}')
 		_COMMENT=$(echo "$_MEASUREMENT" | awk -F '/' '{print $2}')
@@ -423,13 +425,20 @@ function sync() {
 
 }
 
+function missing_parameter_error() {
+  log
+  log "ERROR: Missing parameter for option $1\n";
+  helpme
+  exit 1
+}
+
 ######################################################################################
 # Main function
 ######################################################################################
 function main() {
   readonly _BLOOD_PROPERTIES=./blood.properties
   DIRNAME=$(dirname ${BASH_SOURCE[0]})
-  log "Trying to use $DIRNAME/blood.properties"
+  debug "Trying to use $DIRNAME/blood.properties"
 
   source "$DIRNAME/$_BLOOD_PROPERTIES"
 
@@ -442,16 +451,33 @@ function main() {
 
   if [ $# -eq 0 ]; then
 	  helpme
+	  exit 1;
   fi
 
   while true; do
     case "$1" in
       -d | --debug ) readonly DEBUG="true"; shift;;
-      -D | --dbname ) readonly DATABASE_NAME=$2; shift 2 ;;
-      -e | --engine ) readonly DB_ENGINE=$2; shift 2 ;;
-      -h | --help ) helpme;;
-      -H | --host ) readonly DATABASE_HOST=$2; shift 2 ;;
-      -i | --initialize ) readonly INIT_FILENAME=$2; shift 2 ;;
+      -D | --dbname )
+          if [ "$2" != "" ]; then readonly DATABASE_NAME=$2; shift 2 ;
+          else missing_parameter_error "$1";
+          fi
+        ;;
+      -e | --engine )
+          if [ "$2" != "" ]; then readonly DB_ENGINE=$2; shift 2 ;
+          else missing_parameter_error "$1";
+          fi
+        ;;
+      -h | --help ) helpme; exit 0;;
+      -H | --host )
+          if [ "$2" != "" ]; then readonly DATABASE_HOST=$2; shift 2 ;
+          else missing_parameter_error "$1";
+          fi
+        ;;
+      -i | --initialize )
+          if [ "$2" != "" ]; then readonly INIT_FILENAME=$2; shift 2 ;
+          else missing_parameter_error "$1";
+          fi
+        ;;
       -l | --list )
            if [ "$2" != "" ]; then readonly LIST=$2; shift 2;
            else readonly LIST=$LIST_ENTRIES; shift;
@@ -467,14 +493,42 @@ function main() {
             else readonly LIST_SUGAR=$LIST_ENTRIES; shift;
             fi
         ;;
-      -p | --pressure ) readonly OPTION_PRESSURE=$2; shift 2 ;;
-      -P | --import-pressure ) readonly IMPORT_PRESSURE=$2; shift 2 ;;
-      -q | --query ) readonly OPTION_QUERY=$2; shift 2 ;;
-      -s | --sugar ) readonly OPTION_SUGAR=$2; shift 2 ;;
-      -S | --import-sugar ) readonly IMPORT_SUGAR=$2; shift 2 ;;
-      -U | --user ) readonly USER=$2; shift 2 ;;
+      -p | --pressure )
+          if [ "$2" != "" ]; then readonly OPTION_PRESSURE=$2; shift 2;
+          else missing_parameter_error "$1";
+          fi
+        ;;
+      -P | --import-pressure )
+          if [ "$2" != "" ]; then readonly IMPORT_PRESSURE=$2; shift 2 ;
+          else missing_parameter_error "$1";
+          fi
+        ;;
+      -q | --query )
+          if [ "$2" != "" ]; then readonly OPTION_QUERY=$2; shift 2;
+          else missing_parameter_error "$1";
+          fi
+        ;;
+      -s | --sugar )
+            if [ "$2" != "" ]; then readonly OPTION_SUGAR=$2; shift 2 ;
+            else missing_parameter_error "$1";
+            fi
+        ;;
+      -S | --import-sugar )
+          if [ "$2" != "" ]; then readonly IMPORT_SUGAR=$2; shift 2 ;
+          else missing_parameter_error "$1";
+          fi
+         ;;
+      -U | --user )
+          if [ "$2" != "" ]; then readonly USER=$2; shift 2 ;
+          else missing_parameter_error "$1";
+          fi
+        ;;
       -v | --version ) version; ;;
-      -X | --sync ) readonly OPTION_SYNC=$2; shift 2 ;;
+      -X | --sync )
+          if [ "$2" != "" ]; then readonly OPTION_SYNC=$2; shift 2 ;
+          else missing_parameter_error "$1";
+          fi
+        ;;
       -- ) shift; break ;;
       * ) break ;;
     esac
