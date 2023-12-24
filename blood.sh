@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.0.0-20231222
+VERSION=1.0.1-20231223
 
 ######################################
 # Displays Usage information and exit
@@ -17,23 +17,26 @@ function helpme() {
   echo "Version: $VERSION";
 	echo "Usage: $0 [OPTIONS]";
 	echo "OPTIONS include:";
-  echo "-d --debug                     shows more detailed debug information";
-	echo "-D --dbname DATABASE_NAME      database name";
-	echo "-e --engine DATABASE_ENGINE    database engine can be either sqlite or pgsql";
-	echo "-h --help                      help screen";
-	echo "-H --host DATABASE_HOST        database host";
-	echo "-i --initialize INIT_FILENAME  initialize filename";
-	echo "-p --pressure MEASUREMENT      blood pressure measurement in format of eg.: 120/80/90/'comment'";
-	echo "-P --import_pressure FILENAME  import pressure";
-	echo "                               (systolic/diastolic/pulse/'comment') where comment is optional";
-	echo "-q --query QUERY               SQL query provided to sqlite database (query should correspond with engine -e option)";
-  echo "-s --sugar SUGAR_LEVEL         sugar level in blood in mg/dL using format of eg.: 123/'comment'";
-  echo "                               where 'comment' is optional";
-  echo "-S --import-sugar FILENAME     import sugar";
-	echo "-U --user USERNAME             database user name";
-	echo "-v --version                   displays version information and exits";
-	echo "-X --sync SOURCE:DESTINATION   synchronize databases (copy data from SOURCE to DESTINATION database";
-	echo "                               either SOURCE or DESTINATION may be: sqlite, pgsql";
+  echo "-d --debug                         shows more detailed debug information";
+	echo "-D --dbname DATABASE_NAME          database name";
+	echo "-e --engine DATABASE_ENGINE        database engine can be either sqlite or pgsql";
+	echo "-h --help                          help screen";
+	echo "-H --host DATABASE_HOST            database host";
+	echo "-i --initialize INIT_FILENAME      initialize filename";
+	echo "-l [LIST_ENTRIES]                  list last LIST_ENTRIES (default from properties) entries of both pressure and sugar";
+	echo "   --list-pressure [LIST_ENTRIES]  list last LIST ENTRIES (default from properties) entries of pressure";
+	echo "   --list-sugar [LIST_ENTRIES]     list last LIST_ENTRIES (default from properties) entries of sugar"
+	echo "-p --pressure MEASUREMENT          blood pressure measurement in format of eg.: 120/80/90/'comment'";
+	echo "-P --import_pressure FILENAME      import pressure";
+	echo "                                   (systolic/diastolic/pulse/'comment') where comment is optional";
+	echo "-q --query QUERY                   SQL query provided to sqlite database (query should correspond with engine -e option)";
+  echo "-s --sugar SUGAR_LEVEL             sugar level in blood in mg/dL using format of eg.: 123/'comment'";
+  echo "                                   where 'comment' is optional";
+  echo "-S --import-sugar FILENAME         import sugar";
+	echo "-U --user USERNAME                 database user name";
+	echo "-v --version                       displays version information and exits";
+	echo "-X --sync SOURCE:DESTINATION       synchronize databases (copy data from SOURCE to DESTINATION database";
+	echo "                                   either SOURCE or DESTINATION may be: sqlite, pgsql";
 	echo "";
 	echo "Example: ";
 	echo "./blood.sh -e pgsql -i createdb.sql";
@@ -97,9 +100,9 @@ function debug() {
 ##############################
 function query() {
 
-	readonly _QUERY=$1;
+	_QUERY=$1;
 
-	log "Executing query: $_QUERY";
+	debug "Executing query: $_QUERY";
 
 	case $DB_ENGINE in
 		"sqlite" )
@@ -115,8 +118,36 @@ function query() {
 	esac
 }
 
+######################################################
+# Queries blood table for given number of entries
+# its a wrapper for query function
+# Arguments:
+#  number of entries to receive
+######################################################
+function log_pressure() {
+
+  readonly _LOG_PRESSURE=$1;
+
+  query "SELECT * FROM blood ORDER BY datetime DESC LIMIT $_LOG_PRESSURE";
+
+}
+
+######################################################
+# Queries sugar table for given number of entries
+# its a wrapper for query function
+# Arguments:
+#  number of entries to receive
+######################################################
+function log_sugar() {
+
+  readonly _LOG_SUGAR=$1;
+
+  query "SELECT * FROM sugar ORDER BY datetime DESC LIMIT $_LOG_SUGAR";
+
+}
+
 ############################################
-# Adds entry to blood table  #
+# Adds entry to blood table
 # Globals:
 #   DB_ENGINE
 #   DATABASE_NAME
@@ -160,7 +191,7 @@ function pressure_add() {
 		"sqlite" )
 			_QUERY="INSERT INTO $BLOOD_TABLE (
 				datetime, systolic, diastolic, pulse, comment) VALUES (
-				strftime('%Y-%m-%d %H:%M:%S','now', 'localtime'), $_SYSTOLIC, $_DIASTOLIC, $_PULSE, \"$_COMMENT\"
+				strftime('%Y-%m-%d %H:%M:%f','now', 'localtime'), $_SYSTOLIC, $_DIASTOLIC, $_PULSE, \"$_COMMENT\"
 			);"
 			
 			echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
@@ -181,7 +212,7 @@ function pressure_add() {
 }
 
 ############################################
-# Adds sugar entry to sugar table. #
+# Adds sugar entry to sugar table.
 # Globals:
 #   DB_ENGINE
 #   DATABASE_NAME
@@ -213,7 +244,7 @@ function sugar_add() {
     "sqlite" )
       _QUERY="INSERT INTO $SUGAR_TABLE (
         datetime, sugar, comment) VALUES (
-				strftime('%Y-%m-%d %H:%M:%S','now', 'localtime'), $_SUGAR, \"$_COMMENT\");"
+				strftime('%Y-%m-%d %H:%M:%f','now', 'localtime'), $_SUGAR, \"$_COMMENT\");"
 
       echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
     ;;
@@ -301,7 +332,6 @@ function import_pressure() {
 		* ) ;;
 	esac
 }
-
 
 #######################################################
 # Imports sugar data from .csv file into database.
@@ -406,7 +436,7 @@ function main() {
   if [ $# -eq 0 ]; then
     source ~/.bps2/blood.properties
     DIRNAME="$HOME/.bps2/";
-    log "Using sqlite databese: $DIRNAME/$DATABASE_NAME.db";
+    log "Using sqlite database: $DIRNAME/$DATABASE_NAME.db";
     DATABASE_NAME="$DIRNAME/$DATABASE_NAME"
   fi
 
@@ -416,19 +446,34 @@ function main() {
 
   while true; do
     case "$1" in
-      -d | --debug ) readonly DEBUG="true"; shift 2 ;;
+      -d | --debug ) readonly DEBUG="true"; shift;;
       -D | --dbname ) readonly DATABASE_NAME=$2; shift 2 ;;
       -e | --engine ) readonly DB_ENGINE=$2; shift 2 ;;
       -h | --help ) helpme;;
       -H | --host ) readonly DATABASE_HOST=$2; shift 2 ;;
       -i | --initialize ) readonly INIT_FILENAME=$2; shift 2 ;;
+      -l | --list )
+           if [ "$2" != "" ]; then readonly LIST=$2; shift 2;
+           else readonly LIST=$LIST_ENTRIES; shift;
+           fi
+        ;;
+      --list-pressure )
+            if [ "$2" != "" ]; then readonly LIST_PRESSURE=$2; shift 2 ;
+            else readonly LIST_PRESSURE=$LIST_ENTRIES; shift;
+            fi
+        ;;
+      --list-sugar )
+            if [ "$2" != "" ]; then readonly LIST_SUGAR=$2; shift 2 ;
+            else readonly LIST_SUGAR=$LIST_ENTRIES; shift;
+            fi
+        ;;
       -p | --pressure ) readonly OPTION_PRESSURE=$2; shift 2 ;;
       -P | --import-pressure ) readonly IMPORT_PRESSURE=$2; shift 2 ;;
       -q | --query ) readonly OPTION_QUERY=$2; shift 2 ;;
       -s | --sugar ) readonly OPTION_SUGAR=$2; shift 2 ;;
       -S | --import-sugar ) readonly IMPORT_SUGAR=$2; shift 2 ;;
       -U | --user ) readonly USER=$2; shift 2 ;;
-      -v | --version ) version;;
+      -v | --version ) version; ;;
       -X | --sync ) readonly OPTION_SYNC=$2; shift 2 ;;
       -- ) shift; break ;;
       * ) break ;;
@@ -460,6 +505,23 @@ function main() {
 
   elif [ "$OPTION_QUERY" != "" ]; then
     query "$OPTION_QUERY";
+
+  elif [ "$LIST" != "" ]; then
+    debug "LIST=$LIST"
+    log
+    log "Pressure:";
+    log_pressure "$LIST";
+    log
+    log "Sugar:";
+    log_sugar "$LIST";
+
+  elif [ "$LIST_PRESSURE" != "" ]; then
+    debug "LIST_PRESSURE=$LIST_PRESSURE"
+    log_pressure "$LIST_PRESSURE";
+
+  elif [ "$LIST_SUGAR" != "" ]; then
+    debug "LIST_SUGAR=$LIST_SUGAR"
+    log_sugar "$LIST_SUGAR";
 
   else
     log
