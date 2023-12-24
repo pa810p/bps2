@@ -117,6 +117,7 @@ init_pgsql_database() {
   init_sqlite_database;
   run $BLOOD -s xxx
 
+  assert_failure
   assert_output --partial "Invalid parameter: sugar: \"xxx\"";
 }
 
@@ -124,6 +125,7 @@ init_pgsql_database() {
   init_sqlite_database;
   run $BLOOD -p xxx/80/80;
 
+  assert_failure
   assert_output --partial "Invalid parameter: Systolic: \"xxx\"";
 }
 
@@ -131,6 +133,7 @@ init_pgsql_database() {
   init_sqlite_database;
   run $BLOOD -p 120/xx/80;
 
+  assert_failure
   assert_output --partial "Invalid parameter: Diastolic: \"xx\"";
 }
 
@@ -138,6 +141,7 @@ init_pgsql_database() {
   init_sqlite_database;
   run $BLOOD -p 120/80/xx;
 
+  assert_failure
   assert_output --partial "Invalid parameter: Pulse: \"xx\"";
 }
 
@@ -146,6 +150,7 @@ init_pgsql_database() {
 
   run $BLOOD -p xxxxxxxxx;
 
+  assert_failure
   assert_output --partial "Invalid parameter: Systolic: \"xxxxxxxxx\"";
 }
 
@@ -535,5 +540,138 @@ prepare_sample_sugar() {
   ! grep -q "201|first sugar" <<< "$result"
 
 }
+
+@test "should fail with valid error on missing parameter for -p" {
+  run $BLOOD -p
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -p"
+}
+
+@test "should fail with valid error on missing parameter for -s" {
+  run $BLOOD -s
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -s"
+}
+
+@test "should fail with valid error on missing parameter for --pressure" {
+  run $BLOOD --pressure
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --pressure"
+}
+
+@test "should fail with valid error on missing parameter for --sugar" {
+  run $BLOOD --sugar
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --sugar"
+}
+
+@test "should fail with valid error on missing parameter for -q" {
+  run $BLOOD -q
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -q"
+}
+
+@test "should fail with valid error on missing parameter for --query" {
+  run $BLOOD --query
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --query"
+}
+
+@test "should fail with valid error on missing parameter for -D" {
+  run $BLOOD -D
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -D"
+}
+
+@test "should fail with valid error on missing parameter for --dbname" {
+  run $BLOOD --dbname
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --dbname"
+}
+
+@test "should fail with valid error on missing parameter for -e" {
+  run $BLOOD -e
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -e"
+}
+
+@test "should fail with valid error on missing parameter for --engine" {
+  run $BLOOD --engine
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --engine"
+}
+
+@test "should fail with valid error on missing parameter for -H" {
+  run $BLOOD -H
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -H"
+}
+
+@test "should fail with valid error on missing parameter for --host" {
+  run $BLOOD --host
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --host"
+}
+
+@test "should fail with valid error on missing parameter for -i" {
+  run $BLOOD -i
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -i"
+}
+
+@test "should fail with valid error on missing parameter for --initialize" {
+  run $BLOOD --initialize
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --initialize"
+}
+
+@test "should fail with valid error on missing parameter for -P" {
+  run $BLOOD -P
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -P"
+}
+
+@test "should fail with valid error on missing parameter for --import-pressure" {
+  run $BLOOD --import-pressure
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --import-pressure"
+}
+
+@test "should fail with valid error on missing parameter for -S" {
+  run $BLOOD -S
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -S"
+}
+
+@test "should fail with valid error on missing parameter for --import-sugar" {
+  run $BLOOD --import-sugar
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --import-sugar"
+}
+
+@test "should fail with valid error on missing parameter for -U" {
+  run $BLOOD -U
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -U"
+}
+
+@test "should fail with valid error on missing parameter for --user" {
+  run $BLOOD --user
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --user"
+}
+
+@test "should fail with valid error on missing parameter for -X" {
+  run $BLOOD -X
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -X"
+}
+
+@test "should fail with valid error on missing parameter for --sync" {
+  run $BLOOD --sync
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --sync"
+}
+
 
 
