@@ -473,7 +473,6 @@ function import_urine_acid() {
 	esac
 }
 
-
 #####################################################
 # Synchronize local sqlite database with postgresql
 # Globals:
@@ -522,6 +521,11 @@ function sync() {
 
 }
 
+###################################################################
+# Displays error message when parameter is missing for cli option
+# Attributes:
+#   PARAMETER_NAME
+###################################################################
 function missing_parameter_error() {
   log
   log "ERROR: Missing parameter for option $1\n";
