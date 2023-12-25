@@ -12,3 +12,8 @@ CREATE TABLE IF NOT EXISTS sugar (
   comment TEXT DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS urine_acid (
+  datetime TIMESTAMP UNIQUE,
+  urine INTEGER NOT NULL,
+  comment TEXT DEFAULT ''
+);

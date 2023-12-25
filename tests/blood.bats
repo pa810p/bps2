@@ -121,6 +121,33 @@ init_pgsql_database() {
   assert_output --partial "Invalid parameter: sugar: \"xxx\"";
 }
 
+@test "should add valid urine acid level to sqlite" {
+  init_sqlite_database;
+  run $BLOOD -u 123
+
+  run $BLOOD -q "SELECT urine FROM urine_acid ORDER BY datetime DESC limit 1;" -e sqlite;
+
+  echo "123" | assert_output;
+}
+
+@test "should add valid urine acid level with comment to sqlite" {
+  init_sqlite_database;
+  run $BLOOD -u 123/'some comment'
+
+  run $BLOOD -q "SELECT urine, comment FROM urine_acid ORDER BY datetime DESC limit 1;" -e sqlite;
+
+  echo "123|some comment" | assert_output;
+}
+
+@test "should fail on invalid urine acid level to sqlite" {
+  init_sqlite_database;
+  run $BLOOD -u xxx
+
+  assert_failure
+  assert_output --partial "Invalid parameter: urine acid: \"xxx\"";
+}
+
+
 @test "should fail on invalid systolic xxx/80/80 on sqlite" {
   init_sqlite_database;
   run $BLOOD -p xxx/80/80;
@@ -234,6 +261,34 @@ init_pgsql_database() {
   run $BLOOD -s xxx -e pgsql
 
   assert_output --partial "Invalid parameter: sugar: \"xxx\"";
+}
+
+@test "should add valid urine acid level to pgsql" {
+  init_pgsql_database;
+
+  run $BLOOD -u 123 -e pgsql;
+
+  run $BLOOD -q "SELECT urine FROM urine_acid ORDER BY datetime DESC limit 1;" -e pgsql;
+
+  assert_output --partial "123";
+}
+
+@test "should add valid urine acid level with comment to pgsql" {
+  init_pgsql_database;
+
+  run $BLOOD -u 123/'some comment' -e pgsql;
+
+  run $BLOOD -q "SELECT urine, comment FROM urine_acid ORDER BY datetime DESC limit 1;" -e pgsql;
+
+  assert_output --partial "123 | some comment";
+}
+
+@test "should fail on invalid urine acid level to pgsql" {
+  init_pgsql_database;
+
+  run $BLOOD -u xxx -e pgsql
+
+  assert_output --partial "Invalid parameter: urine acid: \"xxx\"";
 }
 
 @test "should fail on invalid systolic xxx/80/80 on pgsql" {
