@@ -2,13 +2,13 @@
 ###############################################################################
 # BPS2 (Blood Parameters Storage System) is a simple command line interface   #
 # to store previous measured blood parameters such as pressure (diastolic,    #
-# systolic and pulse) and sugar level.                                        #
+# systolic and pulse) sugar level, and urine acid level.                      #
 # Author:     Paweł Prokop (pa810p@gmail.com)                                 #
 # Repository: https://github.com/pa810p/bps2                                  #
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.0.1-20231223
+VERSION=1.0.2-20231225
 
 ######################################
 # Displays Usage information and exit
@@ -27,12 +27,15 @@ function helpme() {
 	echo "   --list-pressure [LIST_ENTRIES]  list last LIST ENTRIES (default from properties) entries of pressure";
 	echo "   --list-sugar [LIST_ENTRIES]     list last LIST_ENTRIES (default from properties) entries of sugar"
 	echo "-p --pressure MEASUREMENT          blood pressure measurement in format of eg.: 120/80/90/'comment'";
-	echo "-P --import_pressure FILENAME      import pressure";
+	echo "-P --import_pressure FILENAME      import pressure from csv FILENAME";
 	echo "                                   (systolic/diastolic/pulse/'comment') where comment is optional";
 	echo "-q --query QUERY                   SQL query provided to sqlite database (query should correspond with engine -e option)";
+	echo "-R --import-urine-acid FILENAME    import urine acid from csv FILENAME";
   echo "-s --sugar SUGAR_LEVEL             sugar level in blood in mg/dL using format of eg.: 123/'comment'";
   echo "                                   where 'comment' is optional";
-  echo "-S --import-sugar FILENAME         import sugar";
+  echo "-S --import-sugar FILENAME         import sugar from csv FILENAME";
+  echo "-u --urine-acid URINE_ACID         urine acid in blood in µmol/l using format of eg.: 370/'comment'";
+  echo "                                   where 'comment' is optional";
 	echo "-U --user USERNAME                 database user name";
 	echo "-v --version                       displays version information and exits";
 	echo "-X --sync SOURCE:DESTINATION       synchronize databases (copy data from SOURCE to DESTINATION database";
@@ -264,6 +267,58 @@ function sugar_add() {
 	esac
 }
 
+############################################
+# Adds urine acid entry to sugar table.
+# Globals:
+#   DB_ENGINE
+#   DATABASE_NAME
+#   DATABASE_USER
+#   DATABASE_PASSWD
+#   DATABASE_HOST
+#   DATABASE_PORT
+#   URINE_ACID_TABLE
+#   PGSQL
+#   SQLITE
+# Arguments:
+#   measurement string to be parsed
+############################################
+function urine_acid_add() {
+  readonly _MEASUREMENT=$1;
+
+  if [ "$_MEASUREMENT" = "" ]; then
+    helpme
+    exit 1;
+  else
+    _URINE_ACID=$(echo "$_MEASUREMENT" | awk -F '/' '{print $1}')
+    _COMMENT=$(echo "$_MEASUREMENT" | awk -F '/' '{print $2}')
+  fi
+
+  log "Urine acid: \"$_URINE_ACID\"";
+
+  if ! [[ "$_URINE_ACID" =~ ^[0-9]+$ ]] ; then fail "urine acid" "$_URINE_ACID"; fi
+
+  case $DB_ENGINE in
+    "sqlite" )
+      _QUERY="INSERT INTO $URINE_ACID_TABLE (
+        datetime, urine, comment) VALUES (
+    	  strftime('%Y-%m-%d %H:%M:%f','now', 'localtime'), $_URINE_ACID, \"$_COMMENT\");"
+
+      echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
+    ;;
+    "pgsql" )
+      _QUERY="INSERT INTO $URINE_ACID_TABLE (
+        datetime, urine, comment) VALUES (
+            'now', $_URINE_ACID, '$_COMMENT');"
+
+      _COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+      $_COMMAND -c "$_QUERY";
+    ;;
+  * )
+    log "Only sqlite and pgsql is supported right now.";
+    ;;
+  esac
+}
+
 ##############################################
 # Initializes database from given init file.
 # Globals:
@@ -376,6 +431,48 @@ function import_sugar() {
 		* ) ;;
 	esac
 }
+#######################################################
+# Imports urine_acid data from .csv file into database.
+# Globals:
+#   DB_ENGINE
+#   DATABASE_NAME
+#   DATABASE_USER
+#   DATABASE_PASSWD
+#   DATABASE_HOST
+#   DATABASE_PORT
+#   URINE_ACID_TABLE
+#   PGSQL
+#   SQLITE
+# Attributes:
+#   ENGINE
+#   IMPORT_FILENAME
+########################################################
+function import_urine_acid() {
+  readonly _ENGINE=$1
+  readonly _FILE=$2
+
+	echo "Importing $_ENGINE from $_FILE";
+
+	case $_ENGINE in
+		"sqlite" )
+			log "SQLITE: Importing from $_FILE into $URINE_ACID_TABLE on database $DATABASE_NAME.db";
+			$SQLITE "$DATABASE_NAME.db" ".mode csv" ".import $_FILE $URINE_ACID_TABLE" ".exit"
+		;;
+		"pgsql" )
+			log "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+			log "-c \"\\COPY tmp_$URINE_ACID_TABLE(datetime, urine, comment) FROM $_FILE DELIMITER ',' CSV\";";
+			COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
+
+			$COMMAND -c "CREATE TABLE tmp_$URINE_ACID_TABLE AS TABLE $URINE_ACID_TABLE;";
+			$COMMAND -c "\\COPY tmp_$URINE_ACID_TABLE(datetime, urine, comment) FROM $_FILE DELIMITER ',' CSV;";
+			$COMMAND -c "INSERT INTO $URINE_ACID_TABLE(datetime, urine, comment) SELECT datetime, urine, comment FROM tmp_$URINE_ACID_TABLE ON CONFLICT DO NOTHING;";
+			$COMMAND -c "DROP TABLE tmp_$URINE_ACID_TABLE;";
+
+		;;
+		* ) ;;
+	esac
+}
+
 
 #####################################################
 # Synchronize local sqlite database with postgresql
@@ -508,6 +605,11 @@ function main() {
           else missing_parameter_error "$1";
           fi
         ;;
+      -R | --import-urine-acid )
+          if [ "$2" != "" ]; then readonly IMPORT_URINE_ACID; shift 2;
+          else missing_parameter_error "$2";
+          fi
+        ;;
       -s | --sugar )
             if [ "$2" != "" ]; then readonly OPTION_SUGAR=$2; shift 2 ;
             else missing_parameter_error "$1";
@@ -518,6 +620,11 @@ function main() {
           else missing_parameter_error "$1";
           fi
          ;;
+      -u | --urine-acid )
+          if [ "$2" != "" ]; then readonly OPTION_URINE_ACID=$2; shift 2 ;
+          else missing_parameter_error "$1";
+          fi
+        ;;
       -U | --user )
           if [ "$2" != "" ]; then readonly USER=$2; shift 2 ;
           else missing_parameter_error "$1";
@@ -548,11 +655,17 @@ function main() {
   elif [ "$IMPORT_SUGAR" != "" ]; then
     import_sugar "$DB_ENGINE" "$IMPORT_SUGAR";
 
+  elif [ "$IMPORT_URINE_ACID" != "" ]; then
+    import_urine_acid "$DB_ENGINE" "$IMPORT_URINE_ACID";
+
   elif [ "$OPTION_PRESSURE" != "" ]; then
     pressure_add "$OPTION_PRESSURE";
 
   elif [ "$OPTION_SUGAR" ]; then
     sugar_add "$OPTION_SUGAR";
+
+  elif [ "$OPTION_URINE_ACID" ]; then
+    urine_acid_add "$OPTION_URINE_ACID";
 
   elif [ "$OPTION_SYNC" != "" ]; then
     sync "$OPTION_SYNC";

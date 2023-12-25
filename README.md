@@ -100,10 +100,8 @@ Executing query: SELECT * FROM blood;
 ## Usage
 
 ````
-$ ./blood.sh
-Trying to use ./blood.properties
-Using sqlite database: /home/pablo/.bps2//blood.db
-Version: 1.0.1-20231224
+$ ./blood.sh 
+
 Usage: ./blood.sh [OPTIONS]
 OPTIONS include:
 -d --debug                         shows more detailed debug information
@@ -116,12 +114,15 @@ OPTIONS include:
    --list-pressure [LIST_ENTRIES]  list last LIST ENTRIES (default from properties) entries of pressure
    --list-sugar [LIST_ENTRIES]     list last LIST_ENTRIES (default from properties) entries of sugar
 -p --pressure MEASUREMENT          blood pressure measurement in format of eg.: 120/80/90/'comment'
--P --import_pressure FILENAME      import pressure
+-P --import_pressure FILENAME      import pressure from csv FILENAME
                                    (systolic/diastolic/pulse/'comment') where comment is optional
 -q --query QUERY                   SQL query provided to sqlite database (query should correspond with engine -e option)
+-R --import-urine-acid FILENAME    import urine acid from csv FILENAME
 -s --sugar SUGAR_LEVEL             sugar level in blood in mg/dL using format of eg.: 123/'comment'
                                    where 'comment' is optional
--S --import-sugar FILENAME         import sugar
+-S --import-sugar FILENAME         import sugar from csv FILENAME
+-u --urine-acid URINE_ACID         urine acid in blood in µmol/l using format of eg.: 370/'comment'
+                                   where 'comment' is optional
 -U --user USERNAME                 database user name
 -v --version                       displays version information and exits
 -X --sync SOURCE:DESTINATION       synchronize databases (copy data from SOURCE to DESTINATION database
