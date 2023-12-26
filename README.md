@@ -100,7 +100,7 @@ Executing query: SELECT * FROM blood;
 ## Usage
 
 ````
-$ ./blood.sh 
+$ ./blood.sh
 Usage: ./blood.sh [OPTIONS]
 OPTIONS include:
 -a --urine-acid URINE_ACID         urine acid in blood in µmol/l using format of eg.: 370/'comment'

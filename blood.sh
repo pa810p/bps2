@@ -658,7 +658,7 @@ function main() {
           if [ "$2" != "" ]; then readonly IMPORT_SUGAR=$2; shift 2 ;
           else missing_parameter_error "$1";
           fi
-         ;;
+        ;;
       -U | --user )
           if [ "$2" != "" ]; then readonly USER=$2; shift 2 ;
           else missing_parameter_error "$1";
