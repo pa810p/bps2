@@ -28,6 +28,8 @@ function helpme() {
 	echo "-l [LIST_ENTRIES]                  list last LIST_ENTRIES (default from properties) entries of both pressure and sugar";
 	echo "   --list-pressure [LIST_ENTRIES]  list last LIST ENTRIES (default from properties) entries of pressure";
 	echo "   --list-sugar [LIST_ENTRIES]     list last LIST_ENTRIES (default from properties) entries of sugar"
+	echo "   --log-level [LEVEL]             logging level where LEvEL may be (0=critical, 1=error, 2=warning, 3=info";
+	echo "                                   4=debug)";
 	echo "-p --pressure MEASUREMENT          blood pressure measurement in format of eg.: 120/80/90/'comment'";
 	echo "-P --import_pressure FILENAME      import pressure from csv FILENAME";
 	echo "                                   (systolic/diastolic/pulse/'comment') where comment is optional";
@@ -82,8 +84,32 @@ function log() {
 #   $1 debug information
 ##################################################
 function debug() {
-  if [ "$DEBUG" = "true" ] ; then
-    log "$1";
+  if [[ "$LOG_LEVEL" -ge 4 ]] ; then
+    log "DEBUG: $1";
+  fi
+}
+
+function info() {
+  if [[ "$LOG_LEVEL" -ge 3 ]] ; then
+    log "INFO: $1";
+  fi
+}
+
+function warn() {
+  if [[ "$LOG_LEVEL" -ge 2 ]] ; then
+    log "WARN: $1";
+  fi
+}
+
+function error() {
+  if [[ "$LOG_LEVEL" -ge 1 ]] ; then
+    log "ERROR: $1";
+  fi
+}
+
+function critical() {
+  if [[ "$LOG_LEVEL" -ge 0 ]] ; then
+    log "CRIT: $1";
   fi
 }
 
@@ -116,7 +142,7 @@ function query() {
 			$_COMMAND -c "$_QUERY";
 		;;
 		* )
-			log "Only sqlite and pgsql is supported right now.";
+			warn "Only sqlite and pgsql is supported right now.";
 		;;
 	esac
 }
@@ -127,11 +153,11 @@ function query() {
 # Arguments:
 #  number of entries to receive
 ######################################################
-function log_pressure() {
+function list_pressure() {
 
-  readonly _LOG_PRESSURE=$1;
+  readonly _LIST_PRESSURE=$1;
 
-  query "SELECT * FROM blood ORDER BY datetime DESC LIMIT $_LOG_PRESSURE";
+  query "SELECT * FROM blood ORDER BY datetime DESC LIMIT $_LIST_PRESSURE";
 
 }
 
@@ -141,11 +167,11 @@ function log_pressure() {
 # Arguments:
 #  number of entries to receive
 ######################################################
-function log_sugar() {
+function list_sugar() {
 
-  readonly _LOG_SUGAR=$1;
+  readonly _LIST_SUGAR=$1;
 
-  query "SELECT * FROM sugar ORDER BY datetime DESC LIMIT $_LOG_SUGAR";
+  query "SELECT * FROM sugar ORDER BY datetime DESC LIMIT $_LIST_SUGAR";
 
 }
 
@@ -181,11 +207,11 @@ function pressure_add() {
 
 	# adding pressure
 
-	log "measurement: $_MEASUREMENT";
-	log "Systolic: \"$_SYSTOLIC\"";
-	log "Diastolic: \"$_DIASTOLIC"\";
-	log "Pulse: \"$_PULSE\"";
-	log "Comment: \"$_COMMENT\"";
+	info "measurement: $_MEASUREMENT";
+	info "Systolic: \"$_SYSTOLIC\"";
+	info "Diastolic: \"$_DIASTOLIC"\";
+	info "Pulse: \"$_PULSE\"";
+	info "Comment: \"$_COMMENT\"";
 
 	if ! [[ $_SYSTOLIC =~ ^[0-9]+$ ]] ; then fail "Systolic" "$_SYSTOLIC"; fi
 	if ! [[ $_DIASTOLIC =~ ^[0-9]+$ ]] ; then fail "Diastolic" "$_DIASTOLIC"; fi
@@ -210,7 +236,7 @@ function pressure_add() {
       $_COMMAND -c "$_QUERY";
 		;;
 	* )
-			log "Only sqlite and pgsql is supported right now.";
+			warn "Only sqlite and pgsql is supported right now.";
     ;;
 	esac
 }
@@ -241,7 +267,7 @@ function sugar_add() {
 		_COMMENT=$(echo "$_MEASUREMENT" | awk -F '/' '{print $2}')
   fi
 
-  log "Sugar: \"$_SUGAR\"";
+  info "Sugar: \"$_SUGAR\"";
 
   if ! [[ "$_SUGAR" =~ ^[0-9]+$ ]] ; then fail "sugar" "$_SUGAR"; fi
 
@@ -262,7 +288,7 @@ function sugar_add() {
       $_COMMAND -c "$_QUERY";
     ;;
   * )
-			log "Only sqlite and pgsql is supported right now.";
+			warn "Only sqlite and pgsql is supported right now.";
     ;;
 	esac
 }
@@ -293,7 +319,7 @@ function urine_acid_add() {
     _COMMENT=$(echo "$_MEASUREMENT" | awk -F '/' '{print $2}')
   fi
 
-  log "Urine acid: \"$_URINE_ACID\"";
+  info "Urine acid: \"$_URINE_ACID\"";
 
   if ! [[ "$_URINE_ACID" =~ ^[0-9]+$ ]] ; then fail "urine acid" "$_URINE_ACID"; fi
 
@@ -314,7 +340,7 @@ function urine_acid_add() {
       $_COMMAND -c "$_QUERY";
     ;;
   * )
-    log "Only sqlite and pgsql is supported right now.";
+    warn "Only sqlite and pgsql is supported right now.";
     ;;
   esac
 }
@@ -336,12 +362,12 @@ function init() {
 	case $DB_ENGINE in
 		"sqlite" )
 			# TODO: validate
-			log "SQLITE: Executing: $SQLITE $DATABASE_NAME.db << $INIT_FILENAME";
+			info "SQLITE: Executing: $SQLITE $DATABASE_NAME.db << $INIT_FILENAME";
 			$SQLITE "$DATABASE_NAME.db" < "$INIT_FILENAME";
 		;;
 		"pgsql" )
 			# TODO: validate
-			log "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME < $INIT_FILENAME";
+			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME < $INIT_FILENAME";
 			$PGSQL "postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME" < "$INIT_FILENAME";
 			;;
 		* ) ;;
@@ -368,16 +394,16 @@ function import_pressure() {
 	readonly _ENGINE=$1
 	readonly _FILE=$2
 
-	echo "Importing $_ENGINE from $_FILE";
+	info "Importing $_ENGINE from $_FILE";
 
 	case $_ENGINE in
 		"sqlite" )
-			log "SQLITE: Importing from $_FILE into $BLOOD_TABLE on database $DATABASE_NAME.db";
+			info "SQLITE: Importing from $_FILE into $BLOOD_TABLE on database $DATABASE_NAME.db";
 			$SQLITE "$DATABASE_NAME.db" ".mode csv" ".import $_FILE $BLOOD_TABLE" ".exit"
 		;;
 		"pgsql" )
-			log "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
-			log "-c \"\\COPY tmp_$BLOOD_TABLE(datetime, systolic, diastolic, pulse, comment) FROM $_FILE DELIMITER ',' CSV\";";
+			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+			info "-c \"\\COPY tmp_$BLOOD_TABLE(datetime, systolic, diastolic, pulse, comment) FROM $_FILE DELIMITER ',' CSV\";";
 			_COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
 
 			$_COMMAND -c "CREATE TABLE tmp_$BLOOD_TABLE AS TABLE $BLOOD_TABLE;";
@@ -410,16 +436,16 @@ function import_sugar() {
   readonly _ENGINE=$1
   readonly _FILE=$2
 
-	echo "Importing $_ENGINE from $_FILE";
+	info "Importing $_ENGINE from $_FILE";
 
 	case $_ENGINE in
 		"sqlite" )
-			log "SQLITE: Importing from $_FILE into $SUGAR_TABLE on database $DATABASE_NAME.db";
+			info "SQLITE: Importing from $_FILE into $SUGAR_TABLE on database $DATABASE_NAME.db";
 			$SQLITE "$DATABASE_NAME.db" ".mode csv" ".import $_FILE $SUGAR_TABLE" ".exit"
 		;;
 		"pgsql" )
-			log "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
-			log "-c \"\\COPY tmp_$SUGAR_TABLE(datetime, sugar, comment) FROM $_FILE DELIMITER ',' CSV\";";
+			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+			info "-c \"\\COPY tmp_$SUGAR_TABLE(datetime, sugar, comment) FROM $_FILE DELIMITER ',' CSV\";";
 			COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
 
 			$COMMAND -c "CREATE TABLE tmp_$SUGAR_TABLE AS TABLE $SUGAR_TABLE;";
@@ -451,16 +477,16 @@ function import_urine_acid() {
   readonly _ENGINE=$1
   readonly _FILE=$2
 
-	echo "Importing $_ENGINE from $_FILE";
+	info "Importing $_ENGINE from $_FILE";
 
 	case $_ENGINE in
 		"sqlite" )
-			log "SQLITE: Importing from $_FILE into $URINE_ACID_TABLE on database $DATABASE_NAME.db";
+			info "SQLITE: Importing from $_FILE into $URINE_ACID_TABLE on database $DATABASE_NAME.db";
 			$SQLITE "$DATABASE_NAME.db" ".mode csv" ".import $_FILE $URINE_ACID_TABLE" ".exit"
 		;;
 		"pgsql" )
-			log "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
-			log "-c \"\\COPY tmp_$URINE_ACID_TABLE(datetime, urine, comment) FROM $_FILE DELIMITER ',' CSV\";";
+			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+			info "-c \"\\COPY tmp_$URINE_ACID_TABLE(datetime, urine, comment) FROM $_FILE DELIMITER ',' CSV\";";
 			COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
 
 			$COMMAND -c "CREATE TABLE tmp_$URINE_ACID_TABLE AS TABLE $URINE_ACID_TABLE;";
@@ -499,7 +525,7 @@ function sync() {
 		"sqlite" )
 			_TMP_FILE=$(mktemp -q)
 			if [ ! -f "$_TMP_FILE" ]; then
-    		log "$0: Can't create temp file, bye..."
+    		error "$0: Can't create temp file, bye..."
     		exit 1
 			fi
 
@@ -514,7 +540,7 @@ function sync() {
 			rm "$_TMP_FILE";
 		;;
 		"pgsql" )
-			log "Feature not implemented yet, only sqlite:pgsql is supported";
+			warn "Feature not implemented yet, only sqlite:pgsql is supported";
 		;;
 		* ) ;;
 	esac
@@ -528,7 +554,7 @@ function sync() {
 ###################################################################
 function missing_parameter_error() {
   log
-  log "ERROR: Missing parameter for option $1\n";
+  error "Missing parameter for option $1\n";
   helpme
   exit 1
 }
@@ -539,14 +565,13 @@ function missing_parameter_error() {
 function main() {
   readonly _BLOOD_PROPERTIES=./blood.properties
   DIRNAME=$(dirname ${BASH_SOURCE[0]})
-  debug "Trying to use $DIRNAME/blood.properties"
+  log "Trying to use $DIRNAME/blood.properties"
 
   source "$DIRNAME/$_BLOOD_PROPERTIES"
-
   if [ $# -eq 0 ]; then
     source ~/.bps2/blood.properties
     DIRNAME="$HOME/.bps2/";
-    log "Using sqlite database: $DIRNAME/$DATABASE_NAME.db";
+    info "Using sqlite database: $DIRNAME/$DATABASE_NAME.db";
     DATABASE_NAME="$DIRNAME/$DATABASE_NAME"
   fi
 
@@ -604,6 +629,11 @@ function main() {
             else readonly LIST_SUGAR=$LIST_ENTRIES; shift;
             fi
         ;;
+      --log-level )
+            if [ "$2" != "" ]; then readonly LOG_LEVEL=$2; shift 2 ;
+            else readonly LOG_level=$LOG_LEVEL
+            fi
+        ;;
       -p | --pressure )
           if [ "$2" != "" ]; then readonly OPTION_PRESSURE=$2; shift 2;
           else missing_parameter_error "$1";
@@ -646,8 +676,8 @@ function main() {
   done
 
   case "$DB_ENGINE" in
-    sqlite ) echo "Using sqlite database name: $DATABASE_NAME"; shift 2 ;;
-    pgsql ) echo "Using postgresql engine with name: $DATABASE_NAME"; shift 2 ;;
+    sqlite ) info "Using sqlite database name: $DATABASE_NAME"; shift 2 ;;
+    pgsql ) info "Using postgresql engine with name: $DATABASE_NAME"; shift 2 ;;
   esac
 
   if [ "$INIT_FILENAME" != "" ]; then
@@ -681,23 +711,19 @@ function main() {
     debug "LIST=$LIST"
     log
     log "Pressure:";
-    log_pressure "$LIST";
+    list_pressure "$LIST";
     log
     log "Sugar:";
-    log_sugar "$LIST";
+    list_sugar "$LIST";
 
   elif [ "$LIST_PRESSURE" != "" ]; then
-    debug "LIST_PRESSURE=$LIST_PRESSURE"
-    log_pressure "$LIST_PRESSURE";
+    list_pressure "$LIST_PRESSURE";
 
   elif [ "$LIST_SUGAR" != "" ]; then
-    debug "LIST_SUGAR=$LIST_SUGAR"
-    log_sugar "$LIST_SUGAR";
+    list_sugar "$LIST_SUGAR";
 
   else
-    log
-    log "ERROR: Not enough parameters!"
-    log
+    error "ERROR: Not enough parameters!"
     helpme;
   fi
 
