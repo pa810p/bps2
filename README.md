@@ -114,6 +114,8 @@ OPTIONS include:
 -l [LIST_ENTRIES]                  list last LIST_ENTRIES (default from properties) entries of both pressure and sugar
    --list-pressure [LIST_ENTRIES]  list last LIST ENTRIES (default from properties) entries of pressure
    --list-sugar [LIST_ENTRIES]     list last LIST_ENTRIES (default from properties) entries of sugar
+   --log-level [LEVEL]             logging level where LEvEL may be (0=critical, 1=error, 2=warning, 3=info
+                                   4=debug)
 -p --pressure MEASUREMENT          blood pressure measurement in format of eg.: 120/80/90/'comment'
 -P --import_pressure FILENAME      import pressure from csv FILENAME
                                    (systolic/diastolic/pulse/'comment') where comment is optional
@@ -182,12 +184,8 @@ bats  blood.bats  test_helper
 $ ./run_blood_tests.sh
 ```
 
-## Known bugs
-1. No error message for **invalid** input (missing parameter -p when adding blood pressure) `./blood.sh 123/90/100`
-
 ## TODO
 - add units option to _blood_template.properties_ so user can specify unit of value he provide to system
-- add feature to store urine acid
 - add feature to store cholesterol level
 - add web interface with features like:
   - GUI interface to :
