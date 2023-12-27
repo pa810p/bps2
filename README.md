@@ -101,9 +101,10 @@ Executing query: SELECT * FROM blood;
 
 ````
 $ ./blood.sh 
-
 Usage: ./blood.sh [OPTIONS]
 OPTIONS include:
+-a --urine-acid URINE_ACID         urine acid in blood in µmol/l using format of eg.: 370/'comment'
+-A --import-urine-acid FILENAME    import urine acid from csv FILENAME
 -d --debug                         shows more detailed debug information
 -D --dbname DATABASE_NAME          database name
 -e --engine DATABASE_ENGINE        database engine can be either sqlite or pgsql
@@ -117,11 +118,9 @@ OPTIONS include:
 -P --import_pressure FILENAME      import pressure from csv FILENAME
                                    (systolic/diastolic/pulse/'comment') where comment is optional
 -q --query QUERY                   SQL query provided to sqlite database (query should correspond with engine -e option)
--R --import-urine-acid FILENAME    import urine acid from csv FILENAME
 -s --sugar SUGAR_LEVEL             sugar level in blood in mg/dL using format of eg.: 123/'comment'
                                    where 'comment' is optional
 -S --import-sugar FILENAME         import sugar from csv FILENAME
--u --urine-acid URINE_ACID         urine acid in blood in µmol/l using format of eg.: 370/'comment'
                                    where 'comment' is optional
 -U --user USERNAME                 database user name
 -v --version                       displays version information and exits

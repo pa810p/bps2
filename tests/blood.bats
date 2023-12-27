@@ -123,7 +123,7 @@ init_pgsql_database() {
 
 @test "should add valid urine acid level to sqlite" {
   init_sqlite_database;
-  run $BLOOD -u 123
+  run $BLOOD -a 123
 
   run $BLOOD -q "SELECT urine FROM urine_acid ORDER BY datetime DESC limit 1;" -e sqlite;
 
@@ -132,7 +132,7 @@ init_pgsql_database() {
 
 @test "should add valid urine acid level with comment to sqlite" {
   init_sqlite_database;
-  run $BLOOD -u 123/'some comment'
+  run $BLOOD -a 123/'some comment'
 
   run $BLOOD -q "SELECT urine, comment FROM urine_acid ORDER BY datetime DESC limit 1;" -e sqlite;
 
@@ -141,7 +141,7 @@ init_pgsql_database() {
 
 @test "should fail on invalid urine acid level to sqlite" {
   init_sqlite_database;
-  run $BLOOD -u xxx
+  run $BLOOD -a xxx
 
   assert_failure
   assert_output --partial "Invalid parameter: urine acid: \"xxx\"";
@@ -266,7 +266,7 @@ init_pgsql_database() {
 @test "should add valid urine acid level to pgsql" {
   init_pgsql_database;
 
-  run $BLOOD -u 123 -e pgsql;
+  run $BLOOD -a 123 -e pgsql;
 
   run $BLOOD -q "SELECT urine FROM urine_acid ORDER BY datetime DESC limit 1;" -e pgsql;
 
@@ -276,7 +276,7 @@ init_pgsql_database() {
 @test "should add valid urine acid level with comment to pgsql" {
   init_pgsql_database;
 
-  run $BLOOD -u 123/'some comment' -e pgsql;
+  run $BLOOD -a 123/'some comment' -e pgsql;
 
   run $BLOOD -q "SELECT urine, comment FROM urine_acid ORDER BY datetime DESC limit 1;" -e pgsql;
 
@@ -286,7 +286,7 @@ init_pgsql_database() {
 @test "should fail on invalid urine acid level to pgsql" {
   init_pgsql_database;
 
-  run $BLOOD -u xxx -e pgsql
+  run $BLOOD -a xxx -e pgsql
 
   assert_output --partial "Invalid parameter: urine acid: \"xxx\"";
 }
@@ -594,6 +594,18 @@ prepare_sample_sugar() {
   grep -q "202|second sugar" <<< "$result"
   ! grep -q "201|first sugar" <<< "$result"
 
+}
+
+@test "should fail with valid error on missing parameter for -A" {
+  run $BLOOD -A
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -A"
+}
+
+@test "should fail with valid error on missing parameter for --import-urine-acid" {
+  run $BLOOD --import-urine-acid
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --import-urine-acid"
 }
 
 @test "should fail with valid error on missing parameter for -p" {

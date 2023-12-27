@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.0.2-20231225
+VERSION=1.0.4
 
 ######################################
 # Displays Usage information and exit
@@ -17,6 +17,8 @@ function helpme() {
   echo "Version: $VERSION";
 	echo "Usage: $0 [OPTIONS]";
 	echo "OPTIONS include:";
+	echo "-a --urine-acid URINE_ACID         urine acid in blood in µmol/l using format of eg.: 370/'comment'";
+  echo "-A --import-urine-acid FILENAME    import urine acid from csv FILENAME";
   echo "-d --debug                         shows more detailed debug information";
 	echo "-D --dbname DATABASE_NAME          database name";
 	echo "-e --engine DATABASE_ENGINE        database engine can be either sqlite or pgsql";
@@ -30,11 +32,9 @@ function helpme() {
 	echo "-P --import_pressure FILENAME      import pressure from csv FILENAME";
 	echo "                                   (systolic/diastolic/pulse/'comment') where comment is optional";
 	echo "-q --query QUERY                   SQL query provided to sqlite database (query should correspond with engine -e option)";
-	echo "-R --import-urine-acid FILENAME    import urine acid from csv FILENAME";
-  echo "-s --sugar SUGAR_LEVEL             sugar level in blood in mg/dL using format of eg.: 123/'comment'";
+	echo "-s --sugar SUGAR_LEVEL             sugar level in blood in mg/dL using format of eg.: 123/'comment'";
   echo "                                   where 'comment' is optional";
   echo "-S --import-sugar FILENAME         import sugar from csv FILENAME";
-  echo "-u --urine-acid URINE_ACID         urine acid in blood in µmol/l using format of eg.: 370/'comment'";
   echo "                                   where 'comment' is optional";
 	echo "-U --user USERNAME                 database user name";
 	echo "-v --version                       displays version information and exits";
@@ -557,6 +557,16 @@ function main() {
 
   while true; do
     case "$1" in
+      -a | --urine-acid )
+        if [ "$2" != "" ]; then readonly OPTION_URINE_ACID=$2; shift 2 ;
+        else missing_parameter_error "$1";
+        fi
+        ;;
+      -A | --import-urine-acid )
+        if [ "$2" != "" ]; then readonly IMPORT_URINE_ACID=$2; shift 2;
+        else missing_parameter_error "$1";
+        fi
+        ;;
       -d | --debug ) readonly DEBUG="true"; shift;;
       -D | --dbname )
           if [ "$2" != "" ]; then readonly DATABASE_NAME=$2; shift 2 ;
@@ -609,11 +619,6 @@ function main() {
           else missing_parameter_error "$1";
           fi
         ;;
-      -R | --import-urine-acid )
-          if [ "$2" != "" ]; then readonly IMPORT_URINE_ACID; shift 2;
-          else missing_parameter_error "$2";
-          fi
-        ;;
       -s | --sugar )
             if [ "$2" != "" ]; then readonly OPTION_SUGAR=$2; shift 2 ;
             else missing_parameter_error "$1";
@@ -624,11 +629,6 @@ function main() {
           else missing_parameter_error "$1";
           fi
          ;;
-      -u | --urine-acid )
-          if [ "$2" != "" ]; then readonly OPTION_URINE_ACID=$2; shift 2 ;
-          else missing_parameter_error "$1";
-          fi
-        ;;
       -U | --user )
           if [ "$2" != "" ]; then readonly USER=$2; shift 2 ;
           else missing_parameter_error "$1";
