@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.0.6
+VERSION=1.0.7
 
 ######################################
 # Displays Usage information and exit
@@ -150,6 +150,8 @@ function query() {
 ######################################################
 # Queries blood table for given number of entries
 # its a wrapper for query function
+# Globals:
+#  PRESSURE_TABLE
 # Arguments:
 #  number of entries to receive
 ######################################################
@@ -157,13 +159,15 @@ function list_pressure() {
 
   readonly _LIST_PRESSURE=$1;
 
-  query "SELECT * FROM blood ORDER BY datetime DESC LIMIT $_LIST_PRESSURE";
+  query "SELECT * FROM $PRESSURE_TABLE ORDER BY datetime DESC LIMIT $_LIST_PRESSURE";
 
 }
 
 ######################################################
 # Queries sugar table for given number of entries
 # its a wrapper for query function
+# Globals:
+#  SUGAR_TABLE
 # Arguments:
 #  number of entries to receive
 ######################################################
@@ -171,13 +175,15 @@ function list_sugar() {
 
   readonly _LIST_SUGAR=$1;
 
-  query "SELECT * FROM sugar ORDER BY datetime DESC LIMIT $_LIST_SUGAR";
+  query "SELECT * FROM $SUGAR_TABLE ORDER BY datetime DESC LIMIT $_LIST_SUGAR";
 
 }
 
 ######################################################
 # Queries sugar table for given number of entries
 # its a wrapper for query function
+# Globals:
+#  URINE_ACID_TABLE
 # Arguments:
 #  number of entries to receive
 ######################################################
@@ -185,7 +191,7 @@ function list_urine_acid() {
 
   readonly _LIST_URINE_ACID=$1;
 
-  query "SELECT * FROM urine_acid ORDER BY datetime DESC LIMIT $_LIST_URINE_ACID";
+  query "SELECT * FROM $URINE_ACID_TABLE ORDER BY datetime DESC LIMIT $_LIST_URINE_ACID";
 
 }
 
@@ -198,7 +204,7 @@ function list_urine_acid() {
 #   DATABASE_PASSWD
 #   DATABASE_HOST
 #   DATABASE_PORT
-#   BLOOD_TABLE
+#   PRESSURE_TABLE
 #   PGSQL
 #   SQLITE
 # Arguments:
@@ -233,7 +239,7 @@ function pressure_add() {
 
 	case $DB_ENGINE in
 		"sqlite" )
-			_QUERY="INSERT INTO $BLOOD_TABLE (
+			_QUERY="INSERT INTO $PRESSURE_TABLE (
 				datetime, systolic, diastolic, pulse, comment) VALUES (
 				strftime('%Y-%m-%d %H:%M:%f','now', 'localtime'), $_SYSTOLIC, $_DIASTOLIC, $_PULSE, \"$_COMMENT\"
 			);"
@@ -241,7 +247,7 @@ function pressure_add() {
 			echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
 		;;
 		"pgsql" )
-			_QUERY="INSERT INTO $BLOOD_TABLE (
+			_QUERY="INSERT INTO $PRESSURE_TABLE (
 				datetime, systolic, diastolic, pulse, comment) VALUES (
 				'now', $_SYSTOLIC, $_DIASTOLIC, $_PULSE, '$_COMMENT'
 			);"
@@ -397,7 +403,7 @@ function init() {
 #   DATABASE_PASSWD
 #   DATABASE_HOST
 #   DATABASE_PORT
-#   BLOOD_TABLE
+#   PRESSURE_TABLE
 #   PGSQL
 #   SQLITE
 # Attributes:
@@ -412,18 +418,18 @@ function import_pressure() {
 
 	case $_ENGINE in
 		"sqlite" )
-			info "SQLITE: Importing from $_FILE into $BLOOD_TABLE on database $DATABASE_NAME.db";
-			$SQLITE "$DATABASE_NAME.db" ".separator ','" ".mode csv" ".import $_FILE $BLOOD_TABLE" ".exit"
+			info "SQLITE: Importing from $_FILE into $PRESSURE_TABLE on database $DATABASE_NAME.db";
+			$SQLITE "$DATABASE_NAME.db" ".separator ','" ".mode csv" ".import $_FILE $PRESSURE_TABLE" ".exit"
 		;;
 		"pgsql" )
 			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
-			info "-c \"\\COPY tmp_$BLOOD_TABLE(datetime, systolic, diastolic, pulse, comment) FROM $_FILE DELIMITER ',' CSV\";";
+			info "-c \"\\COPY tmp_$PRESSURE_TABLE(datetime, systolic, diastolic, pulse, comment) FROM $_FILE DELIMITER ',' CSV\";";
 			_COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
 
-			$_COMMAND -c "CREATE TABLE tmp_$BLOOD_TABLE AS TABLE $BLOOD_TABLE;";
-			$_COMMAND -c "\\COPY tmp_$BLOOD_TABLE(datetime, systolic, diastolic, pulse, comment) FROM $_FILE DELIMITER ',' CSV;";
-			$_COMMAND -c "INSERT INTO $BLOOD_TABLE(datetime, systolic, diastolic, pulse, comment) SELECT datetime, systolic, diastolic, pulse, comment FROM tmp_$BLOOD_TABLE ON CONFLICT DO NOTHING;";
-			$_COMMAND -c "DROP TABLE tmp_$BLOOD_TABLE;";
+			$_COMMAND -c "CREATE TABLE tmp_$PRESSURE_TABLE AS TABLE $PRESSURE_TABLE;";
+			$_COMMAND -c "\\COPY tmp_$PRESSURE_TABLE(datetime, systolic, diastolic, pulse, comment) FROM $_FILE DELIMITER ',' CSV;";
+			$_COMMAND -c "INSERT INTO $PRESSURE_TABLE(datetime, systolic, diastolic, pulse, comment) SELECT datetime, systolic, diastolic, pulse, comment FROM tmp_$PRESSURE_TABLE ON CONFLICT DO NOTHING;";
+			$_COMMAND -c "DROP TABLE tmp_$PRESSURE_TABLE;";
 
 		;;
 		* ) ;;
@@ -522,7 +528,7 @@ function import_urine_acid() {
 #   DATABASE_PASSWD
 #   DATABASE_HOST
 #   DATABASE_PORT
-#   BLOOD_TABLE
+#   PRESSURE_TABLE
 #   SUGAR_TABLE
 #   PGSQL
 #   SQLITE
@@ -543,7 +549,7 @@ function sync() {
     		exit 1
 			fi
 
-			$SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, systolic, diastolic, pulse, comment FROM $BLOOD_TABLE;" > "$_TMP_FILE";
+			$SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, systolic, diastolic, pulse, comment FROM $PRESSURE_TABLE;" > "$_TMP_FILE";
 
 			import_pressure "$_DESTINATION" "$_TMP_FILE";
 
@@ -579,17 +585,18 @@ function missing_parameter_error() {
 function main() {
   readonly _BLOOD_PROPERTIES=./blood.properties
   DIRNAME=$(dirname "${BASH_SOURCE[0]}")
-  log "Trying to use $DIRNAME/blood.properties"
+  log "Trying to use $DIRNAME/blood.properties";
 
   source "$DIRNAME/$_BLOOD_PROPERTIES"
   if [ $# -eq 0 ]; then
+    log "Trying to use ~/.bps2/blood.properties";
     source ~/.bps2/blood.properties
     DIRNAME="$HOME/.bps2/";
-    info "Using sqlite database: $DIRNAME/$DATABASE_NAME.db";
     DATABASE_NAME="$DIRNAME/$DATABASE_NAME"
   fi
 
   if [ $# -eq 0 ]; then
+    error "blood.properties not found!"
 	  helpme
 	  exit 1;
   fi

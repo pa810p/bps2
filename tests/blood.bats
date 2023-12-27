@@ -74,7 +74,7 @@ init_pgsql_database() {
   assert_output --partial "Diastolic: \"80\"";
   assert_output --partial "Pulse: \"80\"";
 
-  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM blood ORDER BY datetime DESC LIMIT 1;" -e sqlite;
+  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM pressure ORDER BY datetime DESC LIMIT 1;" -e sqlite;
 
   echo "120|80|80" | assert_output;
 }
@@ -90,7 +90,7 @@ init_pgsql_database() {
   assert_output --partial "Pulse: \"80\"";
   assert_output --partial "Comment: \"some comment\"";
   
-  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM blood ORDER BY datetime DESC LIMIT 1;" -e sqlite;
+  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM pressure ORDER BY datetime DESC LIMIT 1;" -e sqlite;
 
   echo "120|80|80|some comment" | assert_output;
 }
@@ -185,7 +185,7 @@ init_pgsql_database() {
   init_sqlite_database;
 
   run $BLOOD -p 120/80/80
-  run $BLOOD -q "SELECT * FROM blood ORDER BY datetime LIMIT 1;";
+  run $BLOOD -q "SELECT * FROM pressure ORDER BY datetime LIMIT 1;";
 
   assert_output --partial "|120|80|80|";
 }
@@ -213,7 +213,7 @@ init_pgsql_database() {
   assert_output --partial "Diastolic: \"80\"";
   assert_output --partial "Pulse: \"80\"";
 
-  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM blood ORDER BY datetime DESC LIMIT 1;" -e pgsql;
+  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM pressure ORDER BY datetime DESC LIMIT 1;" -e pgsql;
 
   # assert_output --regexp "^\s*120\s\|\s*80\s\|\s*80\s\|\s*$"
   assert_output --partial "      120 |        80 |    80 |";
@@ -230,7 +230,7 @@ init_pgsql_database() {
   assert_output --partial "Pulse: \"80\"";
   assert_output --partial "Comment: \"some comment\"";
  
-  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM blood ORDER BY datetime DESC LIMIT 1;" -e pgsql;
+  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM pressure ORDER BY datetime DESC LIMIT 1;" -e pgsql;
 
   assert_output --partial "      120 |        80 |    80 | some comment";
 }
@@ -327,7 +327,7 @@ init_pgsql_database() {
   init_pgsql_database;
 
   run $BLOOD -p 120/80/80 -e pgsql
-  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM blood ORDER BY datetime LIMIT 1;" -e pgsql;
+  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM pressure ORDER BY datetime LIMIT 1;" -e pgsql;
 
   assert_output --partial "      120 |        80 |    80 |";
 }
@@ -339,7 +339,7 @@ init_pgsql_database() {
   run $BLOOD -p 133/83/83 -e sqlite
   run $BLOOD -X sqlite:pgsql
 
-  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM blood ORDER BY datetime LIMIT 1;" -e pgsql;
+  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM pressure ORDER BY datetime LIMIT 1;" -e pgsql;
 
   assert_output --partial "      133 |        83 |    83 |";
 }

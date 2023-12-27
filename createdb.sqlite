@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS blood (
+CREATE TABLE IF NOT EXISTS pressure (
 	datetime TIMESTAMP UNIQUE,
 	systolic INTEGER, 
 	diastolic INTEGER, 
