@@ -106,7 +106,6 @@ Usage: ./blood.sh [OPTIONS]
 OPTIONS include:
 -a --urine-acid URINE_ACID          urine acid in blood in µmol/l using format of eg.: 370/'comment'
 -A --import-urine-acid FILENAME     import urine acid from csv FILENAME
--d --debug                          shows more detailed debug information
 -D --dbname DATABASE_NAME           database name
 -e --engine DATABASE_ENGINE         database engine can be either sqlite or pgsql
 -h --help                           help screen

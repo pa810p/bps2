@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.0.5
+VERSION=1.0.6
 
 ######################################
 # Displays Usage information and exit
@@ -19,7 +19,6 @@ function helpme() {
 	echo "OPTIONS include:";
 	echo "-a --urine-acid URINE_ACID          urine acid in blood in µmol/l using format of eg.: 370/'comment'";
   echo "-A --import-urine-acid FILENAME     import urine acid from csv FILENAME";
-  echo "-d --debug                          shows more detailed debug information";
 	echo "-D --dbname DATABASE_NAME           database name";
 	echo "-e --engine DATABASE_ENGINE         database engine can be either sqlite or pgsql";
 	echo "-h --help                           help screen";
@@ -414,7 +413,7 @@ function import_pressure() {
 	case $_ENGINE in
 		"sqlite" )
 			info "SQLITE: Importing from $_FILE into $BLOOD_TABLE on database $DATABASE_NAME.db";
-			$SQLITE "$DATABASE_NAME.db" ".mode csv" ".import $_FILE $BLOOD_TABLE" ".exit"
+			$SQLITE "$DATABASE_NAME.db" ".separator ','" ".mode csv" ".import $_FILE $BLOOD_TABLE" ".exit"
 		;;
 		"pgsql" )
 			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
@@ -456,7 +455,7 @@ function import_sugar() {
 	case $_ENGINE in
 		"sqlite" )
 			info "SQLITE: Importing from $_FILE into $SUGAR_TABLE on database $DATABASE_NAME.db";
-			$SQLITE "$DATABASE_NAME.db" ".mode csv" ".import $_FILE $SUGAR_TABLE" ".exit"
+			$SQLITE "$DATABASE_NAME.db" ".separator ','" ".mode csv" ".import $_FILE $SUGAR_TABLE" ".exit"
 		;;
 		"pgsql" )
 			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
@@ -497,7 +496,7 @@ function import_urine_acid() {
 	case $_ENGINE in
 		"sqlite" )
 			info "SQLITE: Importing from $_FILE into $URINE_ACID_TABLE on database $DATABASE_NAME.db";
-			$SQLITE "$DATABASE_NAME.db" ".mode csv" ".import $_FILE $URINE_ACID_TABLE" ".exit"
+			$SQLITE "$DATABASE_NAME.db" ".separator ','" ".mode csv" ".import $_FILE $URINE_ACID_TABLE" ".exit"
 		;;
 		"pgsql" )
 			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
@@ -579,7 +578,7 @@ function missing_parameter_error() {
 ######################################################################################
 function main() {
   readonly _BLOOD_PROPERTIES=./blood.properties
-  DIRNAME=$(dirname ${BASH_SOURCE[0]})
+  DIRNAME=$(dirname "${BASH_SOURCE[0]}")
   log "Trying to use $DIRNAME/blood.properties"
 
   source "$DIRNAME/$_BLOOD_PROPERTIES"
@@ -607,7 +606,6 @@ function main() {
         else missing_parameter_error "$1";
         fi
         ;;
-      -d | --debug ) readonly DEBUG="true"; shift;;
       -D | --dbname )
           if [ "$2" != "" ]; then readonly DATABASE_NAME=$2; shift 2 ;
           else missing_parameter_error "$1";
@@ -651,7 +649,7 @@ function main() {
         ;;
       --log-level )
             if [ "$2" != "" ]; then readonly LOG_LEVEL=$2; shift 2 ;
-            else readonly LOG_level=$LOG_LEVEL
+            else readonly LOG_LEVEL=$LOG_LEVEL
             fi
         ;;
       -p | --pressure )

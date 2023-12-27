@@ -344,37 +344,27 @@ init_pgsql_database() {
   assert_output --partial "      133 |        83 |    83 |";
 }
 
-# add sample pressure entries to blood table
-prepare_sample_pressure() {
-  run $BLOOD -p 100/80/81/'first pressure'
-  run $BLOOD -p 100/80/82/'second pressure'
-  run $BLOOD -p 100/80/83/'third pressure'
-  run $BLOOD -p 100/80/84/'fourth pressure'
+# imports sample pressure from sample_pressure.csv
+import_sample_pressure() {
+  run $BLOOD -P sample_pressure.csv;
 }
 
-# add sample sugar entries to sugar table
-prepare_sample_sugar() {
-  run $BLOOD -s 201/'first sugar'
-  run $BLOOD -s 202/'second sugar'
-  run $BLOOD -s 203/'third sugar'
-  run $BLOOD -s 204/'fourth sugar'
+# imports sample sugar from sample_sugar.csv
+import_sample_sugar() {
+  run $BLOOD -S sample_sugar.csv
 }
 
-# add sample urine acid entries to sugar table
-prepare_sample_urine_acid() {
-  run $BLOOD -a 321/'first acid'
-  run $BLOOD -a 322/'second acid'
-  run $BLOOD -a 323/'third acid'
-  run $BLOOD -a 324/'fourth acid'
-
+# imports sample urine acid from sample_urine_acid.csv
+import_sample_urine_acid() {
+  run $BLOOD -A sample_urine_acid.csv
 }
 
 @test "should list 2 entries of all features on sqlite" {
   init_sqlite_database;
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD -l 2)"
 
@@ -397,9 +387,9 @@ prepare_sample_urine_acid() {
 @test "should list default entries of all features on sqlite" {
   init_sqlite_database
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD -l)"
 
@@ -423,9 +413,9 @@ prepare_sample_urine_acid() {
 @test "should query list of 2 pressure entries on sqlite" {
   init_sqlite_database
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD --list-pressure 2)"
 
@@ -447,9 +437,9 @@ prepare_sample_urine_acid() {
 @test "should query default pressure entries on sqlite" {
   init_sqlite_database
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD --list-pressure)"
 
@@ -470,9 +460,9 @@ prepare_sample_urine_acid() {
 @test "should list of 2 urine_acid entries on sqlite" {
   init_sqlite_database
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD --list-urine-acid 2)"
 
@@ -494,9 +484,9 @@ prepare_sample_urine_acid() {
 @test "should list default urine acid entries on sqlite" {
   init_sqlite_database
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD --list-urine-acid)"
 
@@ -518,9 +508,9 @@ prepare_sample_urine_acid() {
 @test "should list of 2 sugar entries on sqlite" {
   init_sqlite_database
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD --list-sugar 2)"
 
@@ -542,9 +532,9 @@ prepare_sample_urine_acid() {
 @test "should list default sugar entries on sqlite" {
   init_sqlite_database
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD --list-sugar)"
 
@@ -566,9 +556,9 @@ prepare_sample_urine_acid() {
 @test "should list 2 entries of all features on pgsql" {
   init_pgsql_database;
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD -l 2)"
 
@@ -591,9 +581,9 @@ prepare_sample_urine_acid() {
 @test "should list default entries of all fetures on pgsql" {
   init_pgsql_database;
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD -l)"
 
@@ -617,9 +607,9 @@ prepare_sample_urine_acid() {
 @test "should list of 2 pressure entries on pgsql" {
   init_pgsql_database
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD --list-pressure 2)"
 
@@ -641,9 +631,9 @@ prepare_sample_urine_acid() {
 @test "should list of default pressure entries on pgsql" {
   init_pgsql_database
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD --list-pressure)"
 
@@ -667,8 +657,8 @@ prepare_sample_urine_acid() {
 @test "should list of 2 sugar entries on pgsql" {
   init_pgsql_database
 
-  prepare_sample_pressure
-  prepare_sample_sugar
+  import_sample_pressure
+  import_sample_sugar
 
   result="$(run $BLOOD --list-sugar 2)"
 
@@ -691,9 +681,9 @@ prepare_sample_urine_acid() {
 @test "should list of default sugar entries on pgsql" {
   init_pgsql_database
 
-  prepare_sample_pressure
-  prepare_sample_sugar
-  prepare_sample_urine_acid
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
 
   result="$(run $BLOOD --list-sugar)"
 
@@ -856,6 +846,5 @@ prepare_sample_urine_acid() {
   assert_failure
   assert_output --partial "ERROR: Missing parameter for option --sync"
 }
-
 
 
