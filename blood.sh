@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.0.4
+VERSION=1.0.5
 
 ######################################
 # Displays Usage information and exit
@@ -17,31 +17,32 @@ function helpme() {
   echo "Version: $VERSION";
 	echo "Usage: $0 [OPTIONS]";
 	echo "OPTIONS include:";
-	echo "-a --urine-acid URINE_ACID         urine acid in blood in µmol/l using format of eg.: 370/'comment'";
-  echo "-A --import-urine-acid FILENAME    import urine acid from csv FILENAME";
-  echo "-d --debug                         shows more detailed debug information";
-	echo "-D --dbname DATABASE_NAME          database name";
-	echo "-e --engine DATABASE_ENGINE        database engine can be either sqlite or pgsql";
-	echo "-h --help                          help screen";
-	echo "-H --host DATABASE_HOST            database host";
-	echo "-i --initialize INIT_FILENAME      initialize filename";
-	echo "-l [LIST_ENTRIES]                  list last LIST_ENTRIES (default from properties) entries of both pressure and sugar";
-	echo "   --list-pressure [LIST_ENTRIES]  list last LIST ENTRIES (default from properties) entries of pressure";
-	echo "   --list-sugar [LIST_ENTRIES]     list last LIST_ENTRIES (default from properties) entries of sugar"
-	echo "   --log-level [LEVEL]             logging level where LEvEL may be (0=critical, 1=error, 2=warning, 3=info";
-	echo "                                   4=debug)";
-	echo "-p --pressure MEASUREMENT          blood pressure measurement in format of eg.: 120/80/90/'comment'";
-	echo "-P --import_pressure FILENAME      import pressure from csv FILENAME";
-	echo "                                   (systolic/diastolic/pulse/'comment') where comment is optional";
-	echo "-q --query QUERY                   SQL query provided to sqlite database (query should correspond with engine -e option)";
-	echo "-s --sugar SUGAR_LEVEL             sugar level in blood in mg/dL using format of eg.: 123/'comment'";
-  echo "                                   where 'comment' is optional";
-  echo "-S --import-sugar FILENAME         import sugar from csv FILENAME";
-  echo "                                   where 'comment' is optional";
-	echo "-U --user USERNAME                 database user name";
-	echo "-v --version                       displays version information and exits";
-	echo "-X --sync SOURCE:DESTINATION       synchronize databases (copy data from SOURCE to DESTINATION database";
-	echo "                                   either SOURCE or DESTINATION may be: sqlite, pgsql";
+	echo "-a --urine-acid URINE_ACID          urine acid in blood in µmol/l using format of eg.: 370/'comment'";
+  echo "-A --import-urine-acid FILENAME     import urine acid from csv FILENAME";
+  echo "-d --debug                          shows more detailed debug information";
+	echo "-D --dbname DATABASE_NAME           database name";
+	echo "-e --engine DATABASE_ENGINE         database engine can be either sqlite or pgsql";
+	echo "-h --help                           help screen";
+	echo "-H --host DATABASE_HOST             database host";
+	echo "-i --initialize INIT_FILENAME       initialize filename";
+	echo "-l [LIST_ENTRIES]                   list last LIST_ENTRIES (default from properties) entries of both pressure and sugar";
+	echo "   --list-pressure [LIST_ENTRIES]   list last LIST ENTRIES (default from properties) entries of pressure";
+	echo "   --list-sugar [LIST_ENTRIES]      list last LIST_ENTRIES (default from properties) entries of sugar";
+	echo "   --list-urine-acid [LIST_ENTRIES] list last LIST_ENTRIES (default from properties) entries of urine acid";
+	echo "   --log-level [LEVEL]              logging level where LEvEL may be (0=critical, 1=error, 2=warning, 3=info";
+	echo "                                    4=debug)";
+	echo "-p --pressure MEASUREMENT           blood pressure measurement in format of eg.: 120/80/90/'comment'";
+	echo "-P --import_pressure FILENAME       import pressure from csv FILENAME";
+	echo "                                    (systolic/diastolic/pulse/'comment') where comment is optional";
+	echo "-q --query QUERY                    SQL query provided to sqlite database (query should correspond with engine -e option)";
+	echo "-s --sugar SUGAR_LEVEL              sugar level in blood in mg/dL using format of eg.: 123/'comment'";
+  echo "                                    where 'comment' is optional";
+  echo "-S --import-sugar FILENAME          import sugar from csv FILENAME";
+  echo "                                    where 'comment' is optional";
+	echo "-U --user USERNAME                  database user name";
+	echo "-v --version                        displays version information and exits";
+	echo "-X --sync SOURCE:DESTINATION        synchronize databases (copy data from SOURCE to DESTINATION database";
+	echo "                                    either SOURCE or DESTINATION may be: sqlite, pgsql";
 	echo "";
 	echo "Example: ";
 	echo "./blood.sh -e pgsql -i createdb.sql";
@@ -172,6 +173,20 @@ function list_sugar() {
   readonly _LIST_SUGAR=$1;
 
   query "SELECT * FROM sugar ORDER BY datetime DESC LIMIT $_LIST_SUGAR";
+
+}
+
+######################################################
+# Queries sugar table for given number of entries
+# its a wrapper for query function
+# Arguments:
+#  number of entries to receive
+######################################################
+function list_urine_acid() {
+
+  readonly _LIST_URINE_ACID=$1;
+
+  query "SELECT * FROM urine_acid ORDER BY datetime DESC LIMIT $_LIST_URINE_ACID";
 
 }
 
@@ -629,6 +644,11 @@ function main() {
             else readonly LIST_SUGAR=$LIST_ENTRIES; shift;
             fi
         ;;
+      --list-urine-acid )
+            if [ "$2" != "" ]; then readonly LIST_URINE_ACID=$2; shift 2 ;
+            else readonly LIST_URINE_ACID=$LIST_ENTRIES; shift;
+            fi
+        ;;
       --log-level )
             if [ "$2" != "" ]; then readonly LOG_LEVEL=$2; shift 2 ;
             else readonly LOG_level=$LOG_LEVEL
@@ -715,12 +735,18 @@ function main() {
     log
     log "Sugar:";
     list_sugar "$LIST";
+    log
+    log "Urine acid:";
+    list_urine_acid "$LIST";
 
   elif [ "$LIST_PRESSURE" != "" ]; then
     list_pressure "$LIST_PRESSURE";
 
   elif [ "$LIST_SUGAR" != "" ]; then
     list_sugar "$LIST_SUGAR";
+
+  elif [ "$LIST_URINE_ACID" != "" ]; then
+    list_urine_acid "$LIST_URINE_ACID";
 
   else
     error "ERROR: Not enough parameters!"

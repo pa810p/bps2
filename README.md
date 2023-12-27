@@ -101,33 +101,35 @@ Executing query: SELECT * FROM blood;
 
 ````
 $ ./blood.sh
+
 Usage: ./blood.sh [OPTIONS]
 OPTIONS include:
--a --urine-acid URINE_ACID         urine acid in blood in µmol/l using format of eg.: 370/'comment'
--A --import-urine-acid FILENAME    import urine acid from csv FILENAME
--d --debug                         shows more detailed debug information
--D --dbname DATABASE_NAME          database name
--e --engine DATABASE_ENGINE        database engine can be either sqlite or pgsql
--h --help                          help screen
--H --host DATABASE_HOST            database host
--i --initialize INIT_FILENAME      initialize filename
--l [LIST_ENTRIES]                  list last LIST_ENTRIES (default from properties) entries of both pressure and sugar
-   --list-pressure [LIST_ENTRIES]  list last LIST ENTRIES (default from properties) entries of pressure
-   --list-sugar [LIST_ENTRIES]     list last LIST_ENTRIES (default from properties) entries of sugar
-   --log-level [LEVEL]             logging level where LEvEL may be (0=critical, 1=error, 2=warning, 3=info
-                                   4=debug)
--p --pressure MEASUREMENT          blood pressure measurement in format of eg.: 120/80/90/'comment'
--P --import_pressure FILENAME      import pressure from csv FILENAME
-                                   (systolic/diastolic/pulse/'comment') where comment is optional
--q --query QUERY                   SQL query provided to sqlite database (query should correspond with engine -e option)
--s --sugar SUGAR_LEVEL             sugar level in blood in mg/dL using format of eg.: 123/'comment'
-                                   where 'comment' is optional
--S --import-sugar FILENAME         import sugar from csv FILENAME
-                                   where 'comment' is optional
--U --user USERNAME                 database user name
--v --version                       displays version information and exits
--X --sync SOURCE:DESTINATION       synchronize databases (copy data from SOURCE to DESTINATION database
-                                   either SOURCE or DESTINATION may be: sqlite, pgsql
+-a --urine-acid URINE_ACID          urine acid in blood in µmol/l using format of eg.: 370/'comment'
+-A --import-urine-acid FILENAME     import urine acid from csv FILENAME
+-d --debug                          shows more detailed debug information
+-D --dbname DATABASE_NAME           database name
+-e --engine DATABASE_ENGINE         database engine can be either sqlite or pgsql
+-h --help                           help screen
+-H --host DATABASE_HOST             database host
+-i --initialize INIT_FILENAME       initialize filename
+-l [LIST_ENTRIES]                   list last LIST_ENTRIES (default from properties) entries of both pressure and sugar
+   --list-pressure [LIST_ENTRIES]   list last LIST ENTRIES (default from properties) entries of pressure
+   --list-sugar [LIST_ENTRIES]      list last LIST_ENTRIES (default from properties) entries of sugar
+   --list-urine-acid [LIST_ENTRIES] list last LIST_ENTRIES (default from properties) entries of urine acid
+   --log-level [LEVEL]              logging level where LEvEL may be (0=critical, 1=error, 2=warning, 3=info
+                                    4=debug)
+-p --pressure MEASUREMENT           blood pressure measurement in format of eg.: 120/80/90/'comment'
+-P --import_pressure FILENAME       import pressure from csv FILENAME
+                                    (systolic/diastolic/pulse/'comment') where comment is optional
+-q --query QUERY                    SQL query provided to sqlite database (query should correspond with engine -e option)
+-s --sugar SUGAR_LEVEL              sugar level in blood in mg/dL using format of eg.: 123/'comment'
+                                    where 'comment' is optional
+-S --import-sugar FILENAME          import sugar from csv FILENAME
+                                    where 'comment' is optional
+-U --user USERNAME                  database user name
+-v --version                        displays version information and exits
+-X --sync SOURCE:DESTINATION        synchronize databases (copy data from SOURCE to DESTINATION database
+                                    either SOURCE or DESTINATION may be: sqlite, pgsql
 ````
 
 ### Example usage
