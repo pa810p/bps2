@@ -7,3 +7,6 @@ CREATE TABLE IF NOT EXISTS urine_acid (
   urine INTEGER NOT NULL,
   comment TEXT DEFAULT ''
 );
+
+ALTER TABLE blood RENAME TO pressure;
+

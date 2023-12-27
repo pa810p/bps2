@@ -1,10 +1,10 @@
-DROP TABLE IF EXISTS blood;
-DROP SEQUENCE IF EXISTS blood_id_seq;
+DROP TABLE IF EXISTS pressure;
+DROP SEQUENCE IF EXISTS pressure_id_seq;
 
-CREATE SEQUENCE blood_id_seq start 1 increment 1 minvalue 1 cache 1;
+CREATE SEQUENCE pressure_id_seq start 1 increment 1 minvalue 1 cache 1;
 
-CREATE TABLE IF NOT EXISTS blood (
-	id int4 DEFAULT nextval('blood_id_seq') NOT NULL,
+CREATE TABLE IF NOT EXISTS pressure (
+	id int4 DEFAULT nextval('pressure_id_seq') NOT NULL,
 	datetime TIMESTAMP NOT NULL UNIQUE,
 	systolic INTEGER NOT NULL, 
 	diastolic INTEGER NOT NULL, 
