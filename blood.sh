@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.0.7
+VERSION=1.1.0
 
 ######################################
 # Displays Usage information and exit
