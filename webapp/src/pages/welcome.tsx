@@ -13,10 +13,9 @@ import { useNavigate } from "react-router-dom";
 
 export const renderWelcome = () => {
     const { t } = useTranslation('translation')
-
+    
     console.log("Welcome render")
 
-    const { t } = useTranslation('translation');
     const navigate = useNavigate();
 
     const handlePressureClick = () => {
@@ -48,11 +47,6 @@ export const renderWelcome = () => {
     return (
         <AppBar position="static">
         <Container maxWidth="lg">
-            <Toolbar>
-                <Typography sx={{flexGrow: 1, fontWeight: 700}}>
-                    {t('welcome')}
-                </Typography>
-            {/* </Toolbar> */}
             <Grid container spacing={2}>
                 <Grid item xs={4}>
                     <Button variant="text" size="small"
@@ -63,7 +57,7 @@ export const renderWelcome = () => {
                         style={{display: "flex", flexDirection: "column", textTransform: "none"}}
                         onClick={handlePressureClick}>
                         <img src="logo512.png" width="100" alt="folder"
-                            onMouseOver={handleMouseOver}
+                            // onMouseOver={handleMouseOver}
                             />
                         <label>{t('pressure')}</label>
                     </Button>
@@ -112,7 +106,8 @@ export const renderWelcome = () => {
                                 }}}
                                 style={{display: "flex", flexDirection: "column", textTransform: "none"}}
                         onClick={handleCholesterolClick}
-                        onMouseOver={handleMouseOver}>
+                        // onMouseOver={handleMouseOver}
+                        >
                         <img src="logo512.png" width="100" alt="folder"/>
                         <label>Graphs</label>
                     </Button>
