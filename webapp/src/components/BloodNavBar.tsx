@@ -14,6 +14,8 @@ import MenuItem from '@mui/material/MenuItem';
 import i18n from "i18next";
 import { useTranslation, initReactI18next } from "react-i18next";
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
+import { useNavigate } from "react-router-dom";
+
 
 import { Link } from 'react-router-dom';
 import { SvgIcon } from "@mui/material";
@@ -80,6 +82,7 @@ i18n
 export const renderBloodNavBar = () => {
     console.log("renderBloodNavBar")
     const { t } = useTranslation('translation')
+    const navigate = useNavigate();
 
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
     const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
@@ -92,12 +95,31 @@ export const renderBloodNavBar = () => {
     };
 
     const handleCloseNavMenu = () => {
+        console.log('handleCloseNavMenu')
         setAnchorElNav(null);
     };
 
     const handleCloseUserMenu = () => {
         setAnchorElUser(null);
     };
+
+    const handleBack = () => {
+        console.log('back pressed');
+    }
+
+    const handleBPS2Click = () => {
+        navigate('/');
+        setAnchorElNav(null);
+    }
+
+    const handlePressureClick = () => {
+        navigate('/pressure');
+        setAnchorElNav(null);
+    }
+
+    const handleMenuClick = () => {
+        navigate('/');
+    }
 
     return (
         <AppBar position="static">
@@ -108,12 +130,17 @@ export const renderBloodNavBar = () => {
                         variant="h6"
                         noWrap
                         component="div" // component="a" href="#app-bar-with-responsive-menu"
-                        sx={{ mr: 2, display: { xs: 'none', md: 'flex' } }} //, fontFamily: 'monospace', fontWeight: 700, letterSpacing: '.3rem', color: 'inherit', textDecoration: 'none',}} 
+                        sx={{ mr: 2, display: { xs: 'none', md: 'none' } }} //, fontFamily: 'monospace', fontWeight: 700, letterSpacing: '.3rem', color: 'inherit', textDecoration: 'none',}}
                     >
                         LOGO
                     </Typography>
                     */}
                     <Box sx={{ flexGrow: 0, display: { xs: 'flex', md: 'flex' } }}>
+                        <Button onClick={handleBack}>
+                             <Typography textAlign="left">
+                                 &lt;
+                             </Typography>
+                        </Button>
                         <IconButton
                             size="large"
                             aria-label="account of current user"
@@ -139,22 +166,26 @@ export const renderBloodNavBar = () => {
                             open={Boolean(anchorElNav)}
                             onClose={handleCloseNavMenu}
                             sx={{
-                                display: { xs: 'block', md: 'none' },
+                                display: { xs: 'block', md: 'flex' },
                             }}
                         >
-                            
-                            <MenuItem onClick={handleCloseNavMenu}>
+
+                            <MenuItem onClick={handleBPS2Click}>
                                 <Typography textAlign="center">
                                     <Link style={{ textDecoration: "none", color: "white" }} to="/">{t("BPS2")}</Link>
                                 </Typography>
                             </MenuItem>
-
-                            <MenuItem onClick={handleCloseNavMenu}>
+                            <MenuItem onClick={handlePressureClick}>
                                 <Typography textAlign="center">
-                                    <Link style={{ textDecoration: "none", color: "white" }} to="/pressure">{t("pressure")}</Link>
+                                    <Link style={{ textDecoration: "none", color: "white" }} to="pressure">{t("pressure")}</Link>
                                 </Typography>
                             </MenuItem>
-                            
+                             <MenuItem onClick={handleMenuClick}>
+                                 <Typography textAlign="center">
+                                     <Link style={{ textDecoration: "none", color: "white" }} to="pressure">{t("pressure")}</Link>
+                                 </Typography>
+                             </MenuItem>
+
                             {/*pages.map((page) => (
                                 <MenuItem key={page} onClick={handleCloseNavMenu}>
                                     <Typography textAlign="center">
@@ -165,12 +196,12 @@ export const renderBloodNavBar = () => {
                         </Menu>
                     </Box>
                     {/* {pages.map((page) => ( */}
-                    <MenuItem onClick={handleCloseNavMenu}>
+                    <MenuItem>  {/* onClick={handleCloseNavMenu} */}
                         <Typography textAlign="center">
                             <Link style={{ textDecoration: "none", color: "white" }} to="pressure">{t("pressure")}</Link>
                         </Typography>
                     </MenuItem>
-                    <MenuItem onClick={handleCloseNavMenu}>
+                    <MenuItem>
                         <Typography textAlign="center">
                             <Link style={{ textDecoration: "none", color: "white" }} to="sugar">{t("sugar")}</Link>
                         </Typography>

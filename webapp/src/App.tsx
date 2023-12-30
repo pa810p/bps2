@@ -16,7 +16,6 @@ export const App = () => {
       <Routes>
         <Route path="/pressure" element={renderPressure()}></Route>
         <Route path="/sugar" element={renderSugar()}></Route>
-        <Route path="/welcome" element={renderWelcome()}></Route>
         <Route path="/" element={renderWelcome()}></Route>
       </Routes>  
     </div>
