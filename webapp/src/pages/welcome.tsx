@@ -37,7 +37,7 @@ export const renderWelcome = () => {
         console.log('handleUrineAcidClick');
         navigate('/cholesterol');
     }
-   
+
     const handleGraphsClick = () => {
         console.log('handleGraphsClick');
     }
