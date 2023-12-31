@@ -117,8 +117,24 @@ export const renderBloodNavBar = () => {
         setAnchorElNav(null);
     }
 
-    const handleMenuClick = () => {
-        navigate('/');
+    const handleSugarClick = () => {
+        navigate('/sugar');
+        setAnchorElNav(null);
+    }
+
+    const handleUrineAcidClick = () => {
+        navigate('/urine_acid');
+        setAnchorElNav(null);
+    }
+
+    const handleCholesterolClick = () => {
+        navigate('/cholesterol');
+        setAnchorElNav(null);
+    }
+
+    const handleChartsClick = () => {
+        navigate('/')
+        setAnchorElNav(null);
     }
 
     return (
@@ -180,9 +196,24 @@ export const renderBloodNavBar = () => {
                                     <Link style={{ textDecoration: "none", color: "white" }} to="pressure">{t("pressure")}</Link>
                                 </Typography>
                             </MenuItem>
-                             <MenuItem onClick={handleMenuClick}>
+                            <MenuItem onClick={handleSugarClick}>
+                                <Typography textAlign="center">
+                                    <Link style={{ textDecoration: "none", color: "white" }} to="sugar">{t("sugar")}</Link>
+                                </Typography>
+                            </MenuItem>
+                            <MenuItem onClick={handleUrineAcidClick}>
+                                <Typography textAlign="center">
+                                    <Link style={{ textDecoration: "none", color: "white" }} to="urine_acid">{t("urine acid")}</Link>
+                                </Typography>
+                            </MenuItem>
+                            <MenuItem onClick={handleCholesterolClick}>
                                  <Typography textAlign="center">
-                                     <Link style={{ textDecoration: "none", color: "white" }} to="pressure">{t("pressure")}</Link>
+                                     <Link style={{ textDecoration: "none", color: "white" }} to="cholesterol">{t("cholesterol")}</Link>
+                                 </Typography>
+                             </MenuItem>
+                             <MenuItem onClick={handleChartsClick}>
+                                <Typography textAlign="center">
+                                     <Link style={{ textDecoration: "none", color: "white" }} to="charts">{t("charts")}</Link>
                                  </Typography>
                              </MenuItem>
 

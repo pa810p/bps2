@@ -30,10 +30,16 @@ export const renderWelcome = () => {
 
     const handleUrineAcidClick = () => {
         console.log('handleUrineAcidClick');
+        navigate('/urine_acid');
     }
 
     const handleCholesterolClick = () => {
         console.log('handleUrineAcidClick');
+        navigate('/cholesterol');
+    }
+   
+    const handleGraphsClick = () => {
+        console.log('handleGraphsClick');
     }
 
     i18n.addResource('gb', 'translation', 'welcome', 'Blood Parameters Storage System (BPS2)');
@@ -43,6 +49,22 @@ export const renderWelcome = () => {
     i18n.addResource('gb', 'translation', 'pressure', 'Pressure');
     i18n.addResource('de', 'translation', 'pressure', 'Druck');
     i18n.addResource('pl', 'translation', 'pressure', 'Ciśnienie');
+
+    i18n.addResource('gb', 'translation', 'sugar', 'Sugar');
+    i18n.addResource('de', 'translation', 'sugar', 'Zucker');
+    i18n.addResource('pl', 'translation', 'sugar', 'Cukier');
+
+    i18n.addResource('gb', 'translation', 'urine acid', 'Urine acid');
+    i18n.addResource('de', 'translation', 'urine acid', 'Harnsäure');
+    i18n.addResource('pl', 'translation', 'urine acid', 'Kwas moczowy');
+
+    i18n.addResource('gb', 'translation', 'cholesterol', 'Cholesterol');
+    i18n.addResource('de', 'translation', 'cholesterol', 'Cholesterol');
+    i18n.addResource('pl', 'translation', 'cholesterol', 'Cholesterol');
+
+    i18n.addResource('gb', 'translation', 'charts', 'Charts');
+    i18n.addResource('de', 'translation', 'charts', 'Diagramme');
+    i18n.addResource('pl', 'translation', 'charts', 'Wykresy');
 
     return (
         <AppBar position="static">
@@ -93,7 +115,7 @@ export const renderWelcome = () => {
                                 color: "white"
                                 }}}
                                 style={{display: "flex", flexDirection: "column", textTransform: "none"}}
-                        onClick={handleUrineAcidClick}>
+                        onClick={handleCholesterolClick}>
                         <img src="logo512.png" width="100" alt="folder"/>
                         <label>{t('cholesterol')}</label>
                     </Button>
@@ -105,11 +127,11 @@ export const renderWelcome = () => {
                                 color: "white"
                                 }}}
                                 style={{display: "flex", flexDirection: "column", textTransform: "none"}}
-                        onClick={handleCholesterolClick}
+                        onClick={handleGraphsClick}
                         // onMouseOver={handleMouseOver}
                         >
                         <img src="logo512.png" width="100" alt="folder"/>
-                        <label>Graphs</label>
+                        <label>{t('charts')}</label>
                     </Button>
                 </Grid>
             </Grid>
