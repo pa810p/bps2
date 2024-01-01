@@ -17,3 +17,10 @@ CREATE TABLE IF NOT EXISTS urine_acid (
   urine INTEGER NOT NULL,
   comment TEXT DEFAULT ''
 );
+
+CREATE TABLE IF NOT EXISTS cholesterol (
+  datetime TIMESTAMP UNIQUE,
+  cholesterol INTEGER NOT NULL,
+  comment TEXT DEFAULT ''
+);
+
