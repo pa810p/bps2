@@ -147,6 +147,31 @@ init_pgsql_database() {
   assert_output --partial "Invalid parameter: urine acid: \"xxx\"";
 }
 
+@test "should add valid cholesterol level to sqlite" {
+  init_sqlite_database;
+  run $BLOOD -c 123
+
+  run $BLOOD -q "SELECT cholesterol FROM cholesterol ORDER BY datetime DESC limit 1;" -e sqlite;
+
+  echo "123" | assert_output;
+}
+
+@test "should add valid cholesterol level with comment to sqlite" {
+  init_sqlite_database;
+  run $BLOOD -c 123/'some comment'
+
+  run $BLOOD -q "SELECT cholesterol, comment FROM cholesterol ORDER BY datetime DESC limit 1;" -e sqlite;
+
+  echo "123|some comment" | assert_output;
+}
+
+@test "should fail on invalid cholesterol level to sqlite" {
+  init_sqlite_database;
+  run $BLOOD -c xxx
+
+  assert_failure
+  assert_output --partial "Invalid parameter: cholesterol: \"xxx\"";
+}
 
 @test "should fail on invalid systolic xxx/80/80 on sqlite" {
   init_sqlite_database;
@@ -203,7 +228,7 @@ init_pgsql_database() {
   init_pgsql_database;
 }
 
-@test "should add valid measurement to pgsql" {
+@test "should add valid pressure to pgsql" {
   init_pgsql_database;
 
   run $BLOOD -p 120/80/80 -e pgsql
@@ -219,7 +244,7 @@ init_pgsql_database() {
   assert_output --partial "      120 |        80 |    80 |";
 }
 
-@test "should add valid measurement with comment to pgsql" {
+@test "should add valid pressure with comment to pgsql" {
   init_pgsql_database;
 
   run $BLOOD -p 120/80/80/'some comment' -e pgsql
@@ -291,6 +316,34 @@ init_pgsql_database() {
   assert_output --partial "Invalid parameter: urine acid: \"xxx\"";
 }
 
+@test "should add valid cholesterol level to pgsql" {
+  init_pgsql_database;
+
+  run $BLOOD -c 123 -e pgsql;
+
+  run $BLOOD -q "SELECT cholesterol FROM cholesterol ORDER BY datetime DESC limit 1;" -e pgsql;
+
+  assert_output --partial "123";
+}
+
+@test "should add valid cholesterol level with comment to pgsql" {
+  init_pgsql_database;
+
+  run $BLOOD -c 123/'some comment' -e pgsql;
+
+  run $BLOOD -q "SELECT cholesterol, comment FROM cholesterol ORDER BY datetime DESC limit 1;" -e pgsql;
+
+  assert_output --partial "123 | some comment";
+}
+
+@test "should fail on invalid cholesterol level to pgsql" {
+  init_pgsql_database;
+
+  run $BLOOD -c xxx -e pgsql
+
+  assert_output --partial "Invalid parameter: cholesterol: \"xxx\"";
+}
+
 @test "should fail on invalid systolic xxx/80/80 on pgsql" {
   init_pgsql_database;
 
@@ -359,12 +412,18 @@ import_sample_urine_acid() {
   run $BLOOD -A sample_urine_acid.csv
 }
 
+# imports sample cholesterol from sample_sugar.csv
+import_sample_cholesterol() {
+  run $BLOOD -C sample_cholesterol.csv
+}
+
 @test "should list 2 entries of all features on sqlite" {
   init_sqlite_database;
 
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD -l 2)"
 
@@ -382,6 +441,11 @@ import_sample_urine_acid() {
   grep -q "323|third acid" <<< "$result"
   ! grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
+
+  grep -q "624|fourth cholesterol" <<< "$result"
+  grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
 }
 
 @test "should list default entries of all features on sqlite" {
@@ -390,6 +454,7 @@ import_sample_urine_acid() {
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD -l)"
 
@@ -408,6 +473,11 @@ import_sample_urine_acid() {
   grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
 
+  grep -q "624|fourth cholesterol" <<< "$result"
+  grep -q "623|third cholesterol" <<< "$result"
+  grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
+
 }
 
 @test "should query list of 2 pressure entries on sqlite" {
@@ -416,6 +486,7 @@ import_sample_urine_acid() {
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD --list-pressure 2)"
 
@@ -431,6 +502,10 @@ import_sample_urine_acid() {
   ! grep -q "323|third acid" <<< "$result"
   ! grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
+  ! grep -q "624|fourth cholesterol" <<< "$result"
+  ! grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
 
 }
 
@@ -440,6 +515,7 @@ import_sample_urine_acid() {
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD --list-pressure)"
 
@@ -455,6 +531,67 @@ import_sample_urine_acid() {
   ! grep -q "323|third acid" <<< "$result"
   ! grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
+  ! grep -q "624|fourth cholesterol" <<< "$result"
+  ! grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
+}
+
+@test "should query list of 2 cholesterol entries on sqlite" {
+  init_sqlite_database
+
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
+  import_sample_cholesterol
+
+  result="$(run $BLOOD --list-cholesterol 2)"
+
+  ! grep -q "100|80|84|fourth pressure" <<< "$result"
+  ! grep -q "100|80|83|third pressure" <<< "$result"
+  ! grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+  ! grep -q "204|fourth sugar" <<< "$result"
+  ! grep -q "203|third sugar" <<< "$result"
+  ! grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+  ! grep -q "324|fourth acid" <<< "$result"
+  ! grep -q "323|third acid" <<< "$result"
+  ! grep -q "322|second acid" <<< "$result"
+  ! grep -q "321|first acid" <<< "$result"
+  grep -q "624|fourth cholesterol" <<< "$result"
+  grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
+
+}
+
+@test "should query default cholesterol entries on sqlite" {
+  init_sqlite_database
+
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
+  import_sample_cholesterol
+
+  result="$(run $BLOOD --list-cholesterol)"
+
+  ! grep -q "100|80|84|fourth pressure" <<< "$result"
+  ! grep -q "100|80|83|third pressure" <<< "$result"
+  ! grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+  ! grep -q "204|fourth sugar" <<< "$result"
+  ! grep -q "203|third sugar" <<< "$result"
+  ! grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+  ! grep -q "324|fourth acid" <<< "$result"
+  ! grep -q "323|third acid" <<< "$result"
+  ! grep -q "322|second acid" <<< "$result"
+  ! grep -q "321|first acid" <<< "$result"
+  grep -q "624|fourth cholesterol" <<< "$result"
+  grep -q "623|third cholesterol" <<< "$result"
+  grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
 }
 
 @test "should list of 2 urine_acid entries on sqlite" {
@@ -463,6 +600,7 @@ import_sample_urine_acid() {
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD --list-urine-acid 2)"
 
@@ -478,7 +616,10 @@ import_sample_urine_acid() {
   grep -q "323|third acid" <<< "$result"
   ! grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
-
+  ! grep -q "624|fourth cholesterol" <<< "$result"
+  ! grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
 }
 
 @test "should list default urine acid entries on sqlite" {
@@ -487,6 +628,7 @@ import_sample_urine_acid() {
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD --list-urine-acid)"
 
@@ -502,6 +644,10 @@ import_sample_urine_acid() {
   grep -q "323|third acid" <<< "$result"
   grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
+  ! grep -q "624|fourth cholesterol" <<< "$result"
+  ! grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
 }
 
 
@@ -511,6 +657,7 @@ import_sample_urine_acid() {
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD --list-sugar 2)"
 
@@ -527,6 +674,12 @@ import_sample_urine_acid() {
   ! grep -q "323|third acid" <<< "$result"
   ! grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
+
+  ! grep -q "624|fourth cholesterol" <<< "$result"
+  ! grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
+
 }
 
 @test "should list default sugar entries on sqlite" {
@@ -535,6 +688,7 @@ import_sample_urine_acid() {
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD --list-sugar)"
 
@@ -551,6 +705,11 @@ import_sample_urine_acid() {
   ! grep -q "323|third acid" <<< "$result"
   ! grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
+
+  ! grep -q "624|fourth cholesterol" <<< "$result"
+  ! grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
 }
 
 @test "should list 2 entries of all features on pgsql" {
@@ -559,6 +718,7 @@ import_sample_urine_acid() {
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD -l 2)"
 
@@ -576,6 +736,11 @@ import_sample_urine_acid() {
   grep -q "323|third acid" <<< "$result"
   ! grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
+
+  grep -q "624|fourth cholesterol" <<< "$result"
+  grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
 }
 
 @test "should list default entries of all fetures on pgsql" {
@@ -584,6 +749,7 @@ import_sample_urine_acid() {
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD -l)"
 
@@ -601,8 +767,12 @@ import_sample_urine_acid() {
   grep -q "323|third acid" <<< "$result"
   grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
-}
 
+  grep -q "624|fourth cholesterol" <<< "$result"
+  grep -q "623|third cholesterol" <<< "$result"
+  grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
+}
 
 @test "should list of 2 pressure entries on pgsql" {
   init_pgsql_database
@@ -610,6 +780,7 @@ import_sample_urine_acid() {
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD --list-pressure 2)"
 
@@ -625,7 +796,10 @@ import_sample_urine_acid() {
   ! grep -q "323|third acid" <<< "$result"
   ! grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
-
+  ! grep -q "624|fourth cholesterol" <<< "$result"
+  ! grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
 }
 
 @test "should list of default pressure entries on pgsql" {
@@ -634,6 +808,7 @@ import_sample_urine_acid() {
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD --list-pressure)"
 
@@ -651,14 +826,79 @@ import_sample_urine_acid() {
   ! grep -q "323|third acid" <<< "$result"
   ! grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
+
+  ! grep -q "624|fourth cholesterol" <<< "$result"
+  ! grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
 }
 
+@test "should list of 2 cholesterol entries on pgsql" {
+  init_pgsql_database
+
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
+  import_sample_cholesterol
+
+  result="$(run $BLOOD --list-cholesterol 2)"
+
+  ! grep -q "100|80|84|fourth pressure" <<< "$result"
+  ! grep -q "100|80|83|third pressure" <<< "$result"
+  ! grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+  ! grep -q "204|fourth sugar" <<< "$result"
+  ! grep -q "203|third sugar" <<< "$result"
+  ! grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+  ! grep -q "324|fourth acid" <<< "$result"
+  ! grep -q "323|third acid" <<< "$result"
+  ! grep -q "322|second acid" <<< "$result"
+  ! grep -q "321|first acid" <<< "$result"
+  grep -q "624|fourth cholesterol" <<< "$result"
+  grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
+}
+
+@test "should list of default cholesterol entries on pgsql" {
+  init_pgsql_database
+
+  import_sample_pressure
+  import_sample_sugar
+  import_sample_urine_acid
+  import_sample_cholesterol
+
+  result="$(run $BLOOD --list-cholesterol)"
+
+  ! grep -q "100|80|84|fourth pressure" <<< "$result"
+  ! grep -q "100|80|83|third pressure" <<< "$result"
+  ! grep -q "100|80|82|second pressure" <<< "$result"
+  ! grep -q "100|80|81|first pressure" <<< "$result"
+
+  ! grep -q "204|fourth sugar" <<< "$result"
+  ! grep -q "203|third sugar" <<< "$result"
+  ! grep -q "202|second sugar" <<< "$result"
+  ! grep -q "201|first sugar" <<< "$result"
+
+  ! grep -q "324|fourth acid" <<< "$result"
+  ! grep -q "323|third acid" <<< "$result"
+  ! grep -q "322|second acid" <<< "$result"
+  ! grep -q "321|first acid" <<< "$result"
+
+  grep -q "624|fourth cholesterol" <<< "$result"
+  grep -q "623|third cholesterol" <<< "$result"
+  grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
+}
 
 @test "should list of 2 sugar entries on pgsql" {
   init_pgsql_database
 
   import_sample_pressure
   import_sample_sugar
+  import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD --list-sugar 2)"
 
@@ -676,6 +916,11 @@ import_sample_urine_acid() {
   ! grep -q "323|third acid" <<< "$result"
   ! grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
+
+  ! grep -q "624|fourth cholesterol" <<< "$result"
+  ! grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
 }
 
 @test "should list of default sugar entries on pgsql" {
@@ -684,6 +929,7 @@ import_sample_urine_acid() {
   import_sample_pressure
   import_sample_sugar
   import_sample_urine_acid
+  import_sample_cholesterol
 
   result="$(run $BLOOD --list-sugar)"
 
@@ -701,6 +947,11 @@ import_sample_urine_acid() {
   ! grep -q "323|third acid" <<< "$result"
   ! grep -q "322|second acid" <<< "$result"
   ! grep -q "321|first acid" <<< "$result"
+
+  ! grep -q "624|fourth cholesterol" <<< "$result"
+  ! grep -q "623|third cholesterol" <<< "$result"
+  ! grep -q "622|second cholesterol" <<< "$result"
+  ! grep -q "621|first cholesterol" <<< "$result"
 }
 
 @test "should fail with valid error on missing parameter for -A" {
@@ -713,6 +964,18 @@ import_sample_urine_acid() {
   run $BLOOD --import-urine-acid
   assert_failure
   assert_output --partial "ERROR: Missing parameter for option --import-urine-acid"
+}
+
+@test "should fail with valid error on missing parameter for -C" {
+  run $BLOOD -C
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -C"
+}
+
+@test "should fail with valid error on missing parameter for --import-cholesterol" {
+  run $BLOOD --import-cholesterol
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --import-cholesterol"
 }
 
 @test "should fail with valid error on missing parameter for -p" {
