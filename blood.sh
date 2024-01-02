@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.1.2
+VERSION=1.1.3
 
 ######################################
 # Displays Usage information and exit
@@ -31,7 +31,7 @@ function helpme() {
 	echo "   --list-pressure [LIST_ENTRIES]    list last LIST ENTRIES (default from properties) entries of pressure";
 	echo "   --list-sugar [LIST_ENTRIES]       list last LIST_ENTRIES (default from properties) entries of sugar";
 	echo "   --list-urine-acid [LIST_ENTRIES]  list last LIST_ENTRIES (default from properties) entries of urine acid";
-	echo "   --log-level [LEVEL]               logging level where LEvEL may be (0=critical, 1=error, 2=warning, 3=info";
+	echo "   --log-level [LEVEL]               logging level where LEVEL may be (0=critical, 1=error, 2=warning, 3=info";
 	echo "                                     4=debug)";
 	echo "-p --pressure MEASUREMENT            blood pressure measurement in format of: 120/80/90/'comment'";
 	echo "-P --import_pressure FILENAME        import pressure from csv FILENAME";
@@ -481,8 +481,8 @@ function init() {
 #   IMPORT_FILENAME
 ########################################################
 function import_pressure() {
-	readonly _ENGINE=$1
-	readonly _FILE=$2
+	_ENGINE=$1
+	_FILE=$2
 
 	info "Importing $_ENGINE from $_FILE";
 
@@ -500,9 +500,8 @@ function import_pressure() {
 			$_COMMAND -c "\\COPY tmp_$PRESSURE_TABLE(datetime, systolic, diastolic, pulse, comment) FROM $_FILE DELIMITER ',' CSV;";
 			$_COMMAND -c "INSERT INTO $PRESSURE_TABLE(datetime, systolic, diastolic, pulse, comment) SELECT datetime, systolic, diastolic, pulse, comment FROM tmp_$PRESSURE_TABLE ON CONFLICT DO NOTHING;";
 			$_COMMAND -c "DROP TABLE tmp_$PRESSURE_TABLE;";
-
 		;;
-		* ) ;;
+		* ) critical "engine is not set!";;
 	esac
 }
 
@@ -523,8 +522,8 @@ function import_pressure() {
 #   IMPORT_FILENAME
 ########################################################
 function import_sugar() {
-  readonly _ENGINE=$1
-  readonly _FILE=$2
+  _ENGINE=$1
+  _FILE=$2
 
 	info "Importing $_ENGINE from $_FILE";
 
@@ -542,9 +541,8 @@ function import_sugar() {
 			$COMMAND -c "\\COPY tmp_$SUGAR_TABLE(datetime, sugar, comment) FROM $_FILE DELIMITER ',' CSV;";
 			$COMMAND -c "INSERT INTO $SUGAR_TABLE(datetime, sugar, comment) SELECT datetime, sugar, comment FROM tmp_$SUGAR_TABLE ON CONFLICT DO NOTHING;";
 			$COMMAND -c "DROP TABLE tmp_$SUGAR_TABLE;";
-
 		;;
-		* ) ;;
+		* ) critical "engine is not set!";;
 	esac
 }
 
@@ -565,8 +563,8 @@ function import_sugar() {
 #   IMPORT_FILENAME
 ########################################################
 function import_urine_acid() {
-  readonly _ENGINE=$1
-  readonly _FILE=$2
+  _ENGINE=$1
+  _FILE=$2
 
 	info "Importing $_ENGINE from $_FILE";
 
@@ -584,9 +582,8 @@ function import_urine_acid() {
 			$COMMAND -c "\\COPY tmp_$URINE_ACID_TABLE(datetime, urine, comment) FROM $_FILE DELIMITER ',' CSV;";
 			$COMMAND -c "INSERT INTO $URINE_ACID_TABLE(datetime, urine, comment) SELECT datetime, urine, comment FROM tmp_$URINE_ACID_TABLE ON CONFLICT DO NOTHING;";
 			$COMMAND -c "DROP TABLE tmp_$URINE_ACID_TABLE;";
-
 		;;
-		* ) ;;
+		* ) critical "engine is not set!";;
 	esac
 }
 
@@ -607,8 +604,8 @@ function import_urine_acid() {
 #   IMPORT_FILENAME
 ########################################################
 function import_cholesterol() {
-  readonly _ENGINE=$1
-  readonly _FILE=$2
+  _ENGINE=$1
+  _FILE=$2
 
 	info "Importing $_ENGINE from $_FILE";
 
@@ -627,7 +624,7 @@ function import_cholesterol() {
 			$COMMAND -c "INSERT INTO $CHOLESTEROL_TABLE(datetime, cholesterol, comment) SELECT datetime, cholesterol, comment FROM tmp_$CHOLESTEROL_TABLE ON CONFLICT DO NOTHING;";
 			$COMMAND -c "DROP TABLE tmp_$CHOLESTEROL_TABLE;";
 		;;
-		* ) ;;
+		* ) critical "engine is not set!";;
 	esac
 }
 
@@ -662,20 +659,32 @@ function sync() {
 			fi
 
 			$SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, systolic, diastolic, pulse, comment FROM $PRESSURE_TABLE;" > "$_TMP_FILE";
+			debug "cat $_TMP_FILE:";
+      debug "$(cat "$_TMP_FILE")";
 			import_pressure "$_DESTINATION" "$_TMP_FILE";
 
       $SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, sugar, comment FROM $SUGAR_TABLE;" > "$_TMP_FILE";
+      debug "cat $_TMP_FILE:";
+      debug "$(cat "$_TMP_FILE")";
       import_sugar "$_DESTINATION" "$_TMP_FILE";
 
+      debug "Urine acid table: $URINE_ACID_TABLE"
+      $SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, urine, comment FROM $URINE_ACID_TABLE;" > "$_TMP_FILE";
+      debug "cat $_TMP_FILE:";
+      debug "$(cat "$_TMP_FILE")";
+      import_urine_acid "$_DESTINATION" "$_TMP_FILE";
+
       $SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, cholesterol, comment FROM $CHOLESTEROL_TABLE;" > "$_TMP_FILE";
+      debug "cat $_TMP_FILE:";
+      debug "$(cat "$_TMP_FILE")";
       import_cholesterol "$_DESTINATION" "$_TMP_FILE";
-			
+
 			rm "$_TMP_FILE";
 		;;
 		"pgsql" )
 			warn "Feature not implemented yet, only sqlite:pgsql is supported";
 		;;
-		* ) ;;
+		* ) critical "engine is not set!";;
 	esac
 
 }
