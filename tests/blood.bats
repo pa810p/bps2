@@ -978,6 +978,18 @@ import_sample_cholesterol() {
   assert_output --partial "ERROR: Missing parameter for option --import-urine-acid"
 }
 
+@test "should fail with valid error on missing parameter for -b" {
+  run $BLOOD -b
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option -b"
+}
+
+@test "should fail with valid error on missing parameter for --database-port" {
+  run $BLOOD --database-port
+  assert_failure
+  assert_output --partial "ERROR: Missing parameter for option --database-port"
+}
+
 @test "should fail with valid error on missing parameter for -C" {
   run $BLOOD -C
   assert_failure

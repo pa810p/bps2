@@ -105,6 +105,7 @@ $ ./blood.sh
 Usage: ./blood.sh [OPTIONS]
 OPTIONS include:
 -a --urine-acid URINE_ACID           urine acid in blood in µmol/l using format of: 370/'comment'
+-b --database-port DATABASE_PORT     database port
 -A --import-urine-acid FILENAME      import urine acid from csv FILENAME
 -c --cholesterol CHOLESTEROL         cholesterol in blood in µmol/l using format of: 370/'comment'
 -C --import-cholesterol FILENAME     import cholesterol from csv FILENME
@@ -118,9 +119,9 @@ OPTIONS include:
    --list-pressure [LIST_ENTRIES]    list last LIST ENTRIES (default from properties) entries of pressure
    --list-sugar [LIST_ENTRIES]       list last LIST_ENTRIES (default from properties) entries of sugar
    --list-urine-acid [LIST_ENTRIES]  list last LIST_ENTRIES (default from properties) entries of urine acid
-   --log-level [LEVEL]               logging level where LEvEL may be (0=critical, 1=error, 2=warning, 3=info
+   --log-level [LEVEL]               logging level where LEVEL may be (0=critical, 1=error, 2=warning, 3=info
                                      4=debug)
--p --pressure PRESSUER               blood pressure in format of: 120/80/90/'comment'
+-p --pressure MEASUREMENT            blood pressure measurement in format of: 120/80/90/'comment'
 -P --import_pressure FILENAME        import pressure from csv FILENAME
                                      (systolic/diastolic/pulse/'comment') where comment is optional
 -q --query QUERY                     SQL query provided to sqlite database (query should correspond with engine -e option)
