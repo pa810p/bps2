@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.1.3
+VERSION=1.1.4
 
 ######################################
 # Displays Usage information and exit
@@ -18,6 +18,7 @@ function helpme() {
 	echo "Usage: $0 [OPTIONS]";
 	echo "OPTIONS include:";
 	echo "-a --urine-acid URINE_ACID           urine acid in blood in µmol/l using format of: 370/'comment'";
+	echo "-b --database-port DATABASE_PORT     database port";
   echo "-A --import-urine-acid FILENAME      import urine acid from csv FILENAME";
   echo "-c --cholesterol CHOLESTEROL         cholesterol in blood in µmol/l using format of: 370/'comment'";
   echo "-C --import-cholesterol FILENAME     import cholesterol from csv FILENME";
@@ -732,6 +733,11 @@ function main() {
         ;;
       -A | --import-urine-acid )
         if [ "$2" != "" ]; then readonly IMPORT_URINE_ACID=$2; shift 2;
+        else missing_parameter_error "$1";
+        fi
+        ;;
+      -b | --database-port )
+        if [ "$2" != "" ]; then readonly DATABASE_PORT=$2; shift 2;
         else missing_parameter_error "$1";
         fi
         ;;
