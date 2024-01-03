@@ -409,6 +409,52 @@ init_pgsql_database() {
 
 }
 
+@test "should sync data with comma in comment from sqlite to pgsql" {
+  init_pgsql_database;
+  init_sqlite_database;
+
+  run $BLOOD -p 133/83/83/'first, pressure' -e sqlite
+  run $BLOOD -a 123/'first, urine acid' -e sqlite
+  run $BLOOD -s 234/'first, sugar' -e sqlite
+  run $BLOOD -c 345/'first, cholesterol' -e sqlite
+  run $BLOOD -X sqlite:pgsql
+
+  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM pressure ORDER BY datetime LIMIT 1;" -e pgsql;
+  assert_output --partial "      133 |        83 |    83 | first, pressure";
+
+  run $BLOOD -q "SELECT urine, comment FROM urine_acid ORDER BY datetime DESC limit 1;" -e pgsql;
+  assert_output --partial "   123 | first, urine acid";
+
+  run $BLOOD -q "SELECT sugar, comment FROM sugar ORDER BY datetime DESC limit 1;" -e pgsql;
+  assert_output --partial "   234 | first, sugar";
+
+  run $BLOOD -q "SELECT cholesterol, comment FROM cholesterol ORDER BY datetime DESC limit 1;" -e pgsql;
+  assert_output --partial "   345 | first, cholesterol";
+}
+
+@test "should sync data with quotation in comment from sqlite to pgsql" {
+  init_pgsql_database;
+  init_sqlite_database;
+
+  run $BLOOD -p 133/83/83/'first"", pressure' -e sqlite
+  run $BLOOD -a 123/'first"", urine acid' -e sqlite
+  run $BLOOD -s 234/'first"", sugar' -e sqlite
+  run $BLOOD -c 345/'first"", cholesterol' -e sqlite
+  run $BLOOD -X sqlite:pgsql
+
+  run $BLOOD -q "SELECT systolic, diastolic, pulse, comment FROM pressure ORDER BY datetime LIMIT 1;" -e pgsql;
+  assert_output --partial "      133 |        83 |    83 | first\", pressure";
+
+  run $BLOOD -q "SELECT urine, comment FROM urine_acid ORDER BY datetime DESC limit 1;" -e pgsql;
+  assert_output --partial "   123 | first\", urine acid";
+
+  run $BLOOD -q "SELECT sugar, comment FROM sugar ORDER BY datetime DESC limit 1;" -e pgsql;
+  assert_output --partial "   234 | first\", sugar";
+
+  run $BLOOD -q "SELECT cholesterol, comment FROM cholesterol ORDER BY datetime DESC limit 1;" -e pgsql;
+  assert_output --partial "   345 | first\", cholesterol";
+}
+
 # imports sample pressure from sample_pressure.csv
 import_sample_pressure() {
   run $BLOOD -P sample_pressure.csv;
