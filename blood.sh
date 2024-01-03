@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.1.4
+VERSION=1.1.5
 
 ######################################
 # Displays Usage information and exit
@@ -659,23 +659,31 @@ function sync() {
     		exit 1
 			fi
 
-			$SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, systolic, diastolic, pulse, comment FROM $PRESSURE_TABLE;" > "$_TMP_FILE";
+			$SQLITE -list -separator ',' "$DATABASE_NAME.db" \
+		    "SELECT datetime, systolic, diastolic, pulse, '\"' || REPLACE(comment, '\"', '\"\"') || '\"' FROM $PRESSURE_TABLE;" \
+			  > "$_TMP_FILE";
 			debug "cat $_TMP_FILE:";
       debug "$(cat "$_TMP_FILE")";
 			import_pressure "$_DESTINATION" "$_TMP_FILE";
 
-      $SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, sugar, comment FROM $SUGAR_TABLE;" > "$_TMP_FILE";
+      $SQLITE -list -separator ',' "$DATABASE_NAME.db" \
+        "SELECT datetime, sugar, '\"' || REPLACE(comment, '\"', '\"\"') || '\"' FROM $SUGAR_TABLE;" \
+        > "$_TMP_FILE";
       debug "cat $_TMP_FILE:";
       debug "$(cat "$_TMP_FILE")";
       import_sugar "$_DESTINATION" "$_TMP_FILE";
 
       debug "Urine acid table: $URINE_ACID_TABLE"
-      $SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, urine, comment FROM $URINE_ACID_TABLE;" > "$_TMP_FILE";
+      $SQLITE -list -separator ',' "$DATABASE_NAME.db" \
+        "SELECT datetime, urine, '\"' || REPLACE(comment, '\"', '\"\"') || '\"' FROM $URINE_ACID_TABLE;" \
+        > "$_TMP_FILE";
       debug "cat $_TMP_FILE:";
       debug "$(cat "$_TMP_FILE")";
       import_urine_acid "$_DESTINATION" "$_TMP_FILE";
 
-      $SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, cholesterol, comment FROM $CHOLESTEROL_TABLE;" > "$_TMP_FILE";
+      $SQLITE -list -separator ',' "$DATABASE_NAME.db" \
+        "SELECT datetime, cholesterol, '\"' || REPLACE(comment, '\"', '\"\"') || '\"' FROM $CHOLESTEROL_TABLE;" \
+        > "$_TMP_FILE";
       debug "cat $_TMP_FILE:";
       debug "$(cat "$_TMP_FILE")";
       import_cholesterol "$_DESTINATION" "$_TMP_FILE";
@@ -706,14 +714,20 @@ function missing_parameter_error() {
 # Main function
 ######################################################################################
 function main() {
+  if [ $# -eq 0 ]; then
+    helpme
+    exit 1;
+  fi
+
   readonly _BLOOD_PROPERTIES=./blood.properties
   DIRNAME=$(dirname "${BASH_SOURCE[0]}")
   log "Trying to use $DIRNAME/blood.properties";
+  # cat $DIRNAME/$_BLOOD_PROPERTIES
 
-  source "$DIRNAME/$_BLOOD_PROPERTIES"
+  source "$DIRNAME/$_BLOOD_PROPERTIES";
   if [ $# -eq 0 ]; then
     log "Trying to use ~/.bps2/blood.properties";
-    source ~/.bps2/blood.properties
+    source "~/.bps2/blood.properties"
     DIRNAME="$HOME/.bps2/";
     DATABASE_NAME="$DIRNAME/$DATABASE_NAME"
   fi
