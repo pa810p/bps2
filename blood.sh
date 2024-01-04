@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.1.0
+VERSION=1.2
 
 ######################################
 # Displays Usage information and exit
@@ -17,31 +17,35 @@ function helpme() {
   echo "Version: $VERSION";
 	echo "Usage: $0 [OPTIONS]";
 	echo "OPTIONS include:";
-	echo "-a --urine-acid URINE_ACID          urine acid in blood in µmol/l using format of eg.: 370/'comment'";
-  echo "-A --import-urine-acid FILENAME     import urine acid from csv FILENAME";
-	echo "-D --dbname DATABASE_NAME           database name";
-	echo "-e --engine DATABASE_ENGINE         database engine can be either sqlite or pgsql";
-	echo "-h --help                           help screen";
-	echo "-H --host DATABASE_HOST             database host";
-	echo "-i --initialize INIT_FILENAME       initialize filename";
-	echo "-l [LIST_ENTRIES]                   list last LIST_ENTRIES (default from properties) entries of both pressure and sugar";
-	echo "   --list-pressure [LIST_ENTRIES]   list last LIST ENTRIES (default from properties) entries of pressure";
-	echo "   --list-sugar [LIST_ENTRIES]      list last LIST_ENTRIES (default from properties) entries of sugar";
-	echo "   --list-urine-acid [LIST_ENTRIES] list last LIST_ENTRIES (default from properties) entries of urine acid";
-	echo "   --log-level [LEVEL]              logging level where LEvEL may be (0=critical, 1=error, 2=warning, 3=info";
-	echo "                                    4=debug)";
-	echo "-p --pressure MEASUREMENT           blood pressure measurement in format of eg.: 120/80/90/'comment'";
-	echo "-P --import_pressure FILENAME       import pressure from csv FILENAME";
-	echo "                                    (systolic/diastolic/pulse/'comment') where comment is optional";
-	echo "-q --query QUERY                    SQL query provided to sqlite database (query should correspond with engine -e option)";
-	echo "-s --sugar SUGAR_LEVEL              sugar level in blood in mg/dL using format of eg.: 123/'comment'";
-  echo "                                    where 'comment' is optional";
-  echo "-S --import-sugar FILENAME          import sugar from csv FILENAME";
-  echo "                                    where 'comment' is optional";
-	echo "-U --user USERNAME                  database user name";
-	echo "-v --version                        displays version information and exits";
-	echo "-X --sync SOURCE:DESTINATION        synchronize databases (copy data from SOURCE to DESTINATION database";
-	echo "                                    either SOURCE or DESTINATION may be: sqlite, pgsql";
+	echo "-a --urine-acid URINE_ACID           urine acid in blood in µmol/l using format of: 370/'comment'";
+	echo "-b --database-port DATABASE_PORT     database port";
+  echo "-A --import-urine-acid FILENAME      import urine acid from csv FILENAME";
+  echo "-c --cholesterol CHOLESTEROL         cholesterol in blood in µmol/l using format of: 370/'comment'";
+  echo "-C --import-cholesterol FILENAME     import cholesterol from csv FILENME";
+	echo "-D --dbname DATABASE_NAME            database name";
+	echo "-e --engine DATABASE_ENGINE          database engine can be either sqlite or pgsql";
+	echo "-h --help                            help screen";
+	echo "-H --host DATABASE_HOST              database host";
+	echo "-i --initialize INIT_FILENAME        initialize filename";
+	echo "-l [LIST_ENTRIES]                    list last LIST_ENTRIES (default from properties) entries of both pressure and sugar";
+	echo "   --list-cholesterol [LIST_ENTRIES] list last LIST_ENTRIES (default from properties) entries of cholesterol";
+	echo "   --list-pressure [LIST_ENTRIES]    list last LIST ENTRIES (default from properties) entries of pressure";
+	echo "   --list-sugar [LIST_ENTRIES]       list last LIST_ENTRIES (default from properties) entries of sugar";
+	echo "   --list-urine-acid [LIST_ENTRIES]  list last LIST_ENTRIES (default from properties) entries of urine acid";
+	echo "   --log-level [LEVEL]               logging level where LEVEL may be (0=critical, 1=error, 2=warning, 3=info";
+	echo "                                     4=debug)";
+	echo "-p --pressure MEASUREMENT            blood pressure measurement in format of: 120/80/90/'comment'";
+	echo "-P --import_pressure FILENAME        import pressure from csv FILENAME";
+	echo "                                     (systolic/diastolic/pulse/'comment') where comment is optional";
+	echo "-q --query QUERY                     SQL query provided to sqlite database (query should correspond with engine -e option)";
+	echo "-s --sugar SUGAR_LEVEL               sugar level in blood in mg/dL using format of: 123/'comment'";
+  echo "                                     where 'comment' is optional";
+  echo "-S --import-sugar FILENAME           import sugar from csv FILENAME";
+  echo "                                     where 'comment' is optional";
+	echo "-U --user USERNAME                   database user name";
+	echo "-v --version                         displays version information and exits";
+	echo "-X --sync SOURCE:DESTINATION         synchronize databases (copy data from SOURCE to DESTINATION database";
+	echo "                                     either SOURCE or DESTINATION may be: sqlite, pgsql";
 	echo "";
 	echo "Example: ";
 	echo "./blood.sh -e pgsql -i createdb.sql";
@@ -180,7 +184,7 @@ function list_sugar() {
 }
 
 ######################################################
-# Queries sugar table for given number of entries
+# Queries urine_acid table for given number of entries
 # its a wrapper for query function
 # Globals:
 #  URINE_ACID_TABLE
@@ -192,6 +196,22 @@ function list_urine_acid() {
   readonly _LIST_URINE_ACID=$1;
 
   query "SELECT * FROM $URINE_ACID_TABLE ORDER BY datetime DESC LIMIT $_LIST_URINE_ACID";
+
+}
+
+######################################################
+# Queries cholesterol table for given number of entries
+# its a wrapper for query function
+# Globals:
+#  CHOLESTEROL_TABLE
+# Arguments:
+#  number of entries to receive
+######################################################
+function list_cholesterol() {
+
+  readonly _LIST_CHOLESTEROL=$1;
+
+  query "SELECT * FROM $CHOLESTEROL_TABLE ORDER BY datetime DESC LIMIT $_LIST_CHOLESTEROL";
 
 }
 
@@ -226,7 +246,6 @@ function pressure_add() {
 	fi
 
 	# adding pressure
-
 	info "measurement: $_MEASUREMENT";
 	info "Systolic: \"$_SYSTOLIC\"";
 	info "Diastolic: \"$_DIASTOLIC"\";
@@ -365,6 +384,58 @@ function urine_acid_add() {
   esac
 }
 
+############################################
+# Adds cholesterol entry to sugar table.
+# Globals:
+#   DB_ENGINE
+#   DATABASE_NAME
+#   DATABASE_USER
+#   DATABASE_PASSWD
+#   DATABASE_HOST
+#   DATABASE_PORT
+#   CHOLESTEROL
+#   PGSQL
+#   SQLITE
+# Arguments:
+#   measurement string to be parsed
+############################################
+function cholesterol_add() {
+  readonly _MEASUREMENT=$1;
+
+  if [ "$_MEASUREMENT" = "" ]; then
+    helpme
+    exit 1;
+  else
+    _CHOLESTEROL=$(echo "$_MEASUREMENT" | awk -F '/' '{print $1}')
+    _COMMENT=$(echo "$_MEASUREMENT" | awk -F '/' '{print $2}')
+  fi
+
+  info "Cholesterol: \"$_CHOLESTEROL\"";
+
+  if ! [[ "$_CHOLESTEROL" =~ ^[0-9]+$ ]] ; then fail "cholesterol" "$_CHOLESTEROL"; fi
+
+  case $DB_ENGINE in
+    "sqlite" )
+      _QUERY="INSERT INTO $CHOLESTEROL_TABLE (
+        datetime, cholesterol, comment) VALUES (
+    	  strftime('%Y-%m-%d %H:%M:%f','now', 'localtime'), $_CHOLESTEROL, \"$_COMMENT\");"
+
+      echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
+    ;;
+    "pgsql" )
+      _QUERY="INSERT INTO $CHOLESTEROL_TABLE (
+        datetime, cholesterol, comment) VALUES (
+            'now', $_CHOLESTEROL, '$_COMMENT');"
+
+      _COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+      $_COMMAND -c "$_QUERY";
+    ;;
+  * )
+    warn "Only sqlite and pgsql is supported right now.";
+    ;;
+  esac
+}
+
 ##############################################
 # Initializes database from given init file.
 # Globals:
@@ -411,8 +482,8 @@ function init() {
 #   IMPORT_FILENAME
 ########################################################
 function import_pressure() {
-	readonly _ENGINE=$1
-	readonly _FILE=$2
+	_ENGINE=$1
+	_FILE=$2
 
 	info "Importing $_ENGINE from $_FILE";
 
@@ -430,9 +501,8 @@ function import_pressure() {
 			$_COMMAND -c "\\COPY tmp_$PRESSURE_TABLE(datetime, systolic, diastolic, pulse, comment) FROM $_FILE DELIMITER ',' CSV;";
 			$_COMMAND -c "INSERT INTO $PRESSURE_TABLE(datetime, systolic, diastolic, pulse, comment) SELECT datetime, systolic, diastolic, pulse, comment FROM tmp_$PRESSURE_TABLE ON CONFLICT DO NOTHING;";
 			$_COMMAND -c "DROP TABLE tmp_$PRESSURE_TABLE;";
-
 		;;
-		* ) ;;
+		* ) critical "engine is not set!";;
 	esac
 }
 
@@ -453,8 +523,8 @@ function import_pressure() {
 #   IMPORT_FILENAME
 ########################################################
 function import_sugar() {
-  readonly _ENGINE=$1
-  readonly _FILE=$2
+  _ENGINE=$1
+  _FILE=$2
 
 	info "Importing $_ENGINE from $_FILE";
 
@@ -472,11 +542,11 @@ function import_sugar() {
 			$COMMAND -c "\\COPY tmp_$SUGAR_TABLE(datetime, sugar, comment) FROM $_FILE DELIMITER ',' CSV;";
 			$COMMAND -c "INSERT INTO $SUGAR_TABLE(datetime, sugar, comment) SELECT datetime, sugar, comment FROM tmp_$SUGAR_TABLE ON CONFLICT DO NOTHING;";
 			$COMMAND -c "DROP TABLE tmp_$SUGAR_TABLE;";
-
 		;;
-		* ) ;;
+		* ) critical "engine is not set!";;
 	esac
 }
+
 #######################################################
 # Imports urine_acid data from .csv file into database.
 # Globals:
@@ -494,8 +564,8 @@ function import_sugar() {
 #   IMPORT_FILENAME
 ########################################################
 function import_urine_acid() {
-  readonly _ENGINE=$1
-  readonly _FILE=$2
+  _ENGINE=$1
+  _FILE=$2
 
 	info "Importing $_ENGINE from $_FILE";
 
@@ -513,9 +583,49 @@ function import_urine_acid() {
 			$COMMAND -c "\\COPY tmp_$URINE_ACID_TABLE(datetime, urine, comment) FROM $_FILE DELIMITER ',' CSV;";
 			$COMMAND -c "INSERT INTO $URINE_ACID_TABLE(datetime, urine, comment) SELECT datetime, urine, comment FROM tmp_$URINE_ACID_TABLE ON CONFLICT DO NOTHING;";
 			$COMMAND -c "DROP TABLE tmp_$URINE_ACID_TABLE;";
-
 		;;
-		* ) ;;
+		* ) critical "engine is not set!";;
+	esac
+}
+
+#######################################################
+# Imports cholesterol data from .csv file into database.
+# Globals:
+#   DB_ENGINE
+#   DATABASE_NAME
+#   DATABASE_USER
+#   DATABASE_PASSWD
+#   DATABASE_HOST
+#   DATABASE_PORT
+#   URINE_ACID_TABLE
+#   PGSQL
+#   SQLITE
+# Attributes:
+#   ENGINE
+#   IMPORT_FILENAME
+########################################################
+function import_cholesterol() {
+  _ENGINE=$1
+  _FILE=$2
+
+	info "Importing $_ENGINE from $_FILE";
+
+	case $_ENGINE in
+		"sqlite" )
+			info "SQLITE: Importing from $_FILE into $CHOLESTEROL_TABLE on database $DATABASE_NAME.db";
+			$SQLITE "$DATABASE_NAME.db" ".separator ','" ".mode csv" ".import $_FILE $CHOLESTEROL_TABLE" ".exit"
+		;;
+		"pgsql" )
+			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+			info "-c \"\\COPY tmp_$CHOLESTEROL_TABLE(datetime, cholesterol, comment) FROM $_FILE DELIMITER ',' CSV\";";
+			COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
+
+			$COMMAND -c "CREATE TABLE tmp_$CHOLESTEROL_TABLE AS TABLE $CHOLESTEROL_TABLE;";
+			$COMMAND -c "\\COPY tmp_$CHOLESTEROL_TABLE(datetime, cholesterol, comment) FROM $_FILE DELIMITER ',' CSV;";
+			$COMMAND -c "INSERT INTO $CHOLESTEROL_TABLE(datetime, cholesterol, comment) SELECT datetime, cholesterol, comment FROM tmp_$CHOLESTEROL_TABLE ON CONFLICT DO NOTHING;";
+			$COMMAND -c "DROP TABLE tmp_$CHOLESTEROL_TABLE;";
+		;;
+		* ) critical "engine is not set!";;
 	esac
 }
 
@@ -549,20 +659,41 @@ function sync() {
     		exit 1
 			fi
 
-			$SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, systolic, diastolic, pulse, comment FROM $PRESSURE_TABLE;" > "$_TMP_FILE";
-
+			$SQLITE -list -separator ',' "$DATABASE_NAME.db" \
+		    "SELECT datetime, systolic, diastolic, pulse, '\"' || REPLACE(comment, '\"', '\"\"') || '\"' FROM $PRESSURE_TABLE;" \
+			  > "$_TMP_FILE";
+			debug "cat $_TMP_FILE:";
+      debug "$(cat "$_TMP_FILE")";
 			import_pressure "$_DESTINATION" "$_TMP_FILE";
 
-      $SQLITE -list -separator ',' "$DATABASE_NAME.db" "SELECT datetime, sugar, comment FROM $SUGAR_TABLE;" > "$_TMP_FILE";
-
+      $SQLITE -list -separator ',' "$DATABASE_NAME.db" \
+        "SELECT datetime, sugar, '\"' || REPLACE(comment, '\"', '\"\"') || '\"' FROM $SUGAR_TABLE;" \
+        > "$_TMP_FILE";
+      debug "cat $_TMP_FILE:";
+      debug "$(cat "$_TMP_FILE")";
       import_sugar "$_DESTINATION" "$_TMP_FILE";
-			
+
+      debug "Urine acid table: $URINE_ACID_TABLE"
+      $SQLITE -list -separator ',' "$DATABASE_NAME.db" \
+        "SELECT datetime, urine, '\"' || REPLACE(comment, '\"', '\"\"') || '\"' FROM $URINE_ACID_TABLE;" \
+        > "$_TMP_FILE";
+      debug "cat $_TMP_FILE:";
+      debug "$(cat "$_TMP_FILE")";
+      import_urine_acid "$_DESTINATION" "$_TMP_FILE";
+
+      $SQLITE -list -separator ',' "$DATABASE_NAME.db" \
+        "SELECT datetime, cholesterol, '\"' || REPLACE(comment, '\"', '\"\"') || '\"' FROM $CHOLESTEROL_TABLE;" \
+        > "$_TMP_FILE";
+      debug "cat $_TMP_FILE:";
+      debug "$(cat "$_TMP_FILE")";
+      import_cholesterol "$_DESTINATION" "$_TMP_FILE";
+
 			rm "$_TMP_FILE";
 		;;
 		"pgsql" )
 			warn "Feature not implemented yet, only sqlite:pgsql is supported";
 		;;
-		* ) ;;
+		* ) critical "engine is not set!";;
 	esac
 
 }
@@ -583,14 +714,20 @@ function missing_parameter_error() {
 # Main function
 ######################################################################################
 function main() {
+  if [ $# -eq 0 ]; then
+    helpme
+    exit 1;
+  fi
+
   readonly _BLOOD_PROPERTIES=./blood.properties
   DIRNAME=$(dirname "${BASH_SOURCE[0]}")
   log "Trying to use $DIRNAME/blood.properties";
+  # cat $DIRNAME/$_BLOOD_PROPERTIES
 
-  source "$DIRNAME/$_BLOOD_PROPERTIES"
+  source "$DIRNAME/$_BLOOD_PROPERTIES";
   if [ $# -eq 0 ]; then
     log "Trying to use ~/.bps2/blood.properties";
-    source ~/.bps2/blood.properties
+    source "~/.bps2/blood.properties"
     DIRNAME="$HOME/.bps2/";
     DATABASE_NAME="$DIRNAME/$DATABASE_NAME"
   fi
@@ -610,6 +747,21 @@ function main() {
         ;;
       -A | --import-urine-acid )
         if [ "$2" != "" ]; then readonly IMPORT_URINE_ACID=$2; shift 2;
+        else missing_parameter_error "$1";
+        fi
+        ;;
+      -b | --database-port )
+        if [ "$2" != "" ]; then readonly DATABASE_PORT=$2; shift 2;
+        else missing_parameter_error "$1";
+        fi
+        ;;
+      -c | --cholesterol )
+        if [ "$2" != "" ]; then readonly OPTION_CHOLESTEROL=$2; shift 2;
+        else missing_parameter_error "$1";
+        fi
+        ;;
+      -C | --import-cholesterol )
+        if [ "$2" != "" ]; then readonly IMPORT_CHOLESTEROL=$2; shift 2;
         else missing_parameter_error "$1";
         fi
         ;;
@@ -635,19 +787,24 @@ function main() {
           fi
         ;;
       -l | --list )
-           if [ "$2" != "" ]; then readonly LIST=$2; shift 2;
-           else readonly LIST=$LIST_ENTRIES; shift;
-           fi
+          if [ "$2" != "" ]; then readonly LIST=$2; shift 2;
+          else readonly LIST=$LIST_ENTRIES; shift;
+          fi
+        ;;
+      --list-cholesterol )
+          if [ "$2" != "" ]; then readonly LIST_CHOLESTEROL=$2; shift 2;
+          else readonly LIST_CHOLESTEROL=$LIST_ENTRIES; shift;
+          fi
         ;;
       --list-pressure )
-            if [ "$2" != "" ]; then readonly LIST_PRESSURE=$2; shift 2 ;
-            else readonly LIST_PRESSURE=$LIST_ENTRIES; shift;
-            fi
+          if [ "$2" != "" ]; then readonly LIST_PRESSURE=$2; shift 2 ;
+          else readonly LIST_PRESSURE=$LIST_ENTRIES; shift;
+          fi
         ;;
       --list-sugar )
-            if [ "$2" != "" ]; then readonly LIST_SUGAR=$2; shift 2 ;
-            else readonly LIST_SUGAR=$LIST_ENTRIES; shift;
-            fi
+          if [ "$2" != "" ]; then readonly LIST_SUGAR=$2; shift 2 ;
+          else readonly LIST_SUGAR=$LIST_ENTRIES; shift;
+          fi
         ;;
       --list-urine-acid )
             if [ "$2" != "" ]; then readonly LIST_URINE_ACID=$2; shift 2 ;
@@ -717,6 +874,9 @@ function main() {
   elif [ "$IMPORT_URINE_ACID" != "" ]; then
     import_urine_acid "$DB_ENGINE" "$IMPORT_URINE_ACID";
 
+  elif [ "$IMPORT_CHOLESTEROL" != "" ]; then
+    import_cholesterol "$DB_ENGINE" "$IMPORT_CHOLESTEROL";
+
   elif [ "$OPTION_PRESSURE" != "" ]; then
     pressure_add "$OPTION_PRESSURE";
 
@@ -725,6 +885,9 @@ function main() {
 
   elif [ "$OPTION_URINE_ACID" ]; then
     urine_acid_add "$OPTION_URINE_ACID";
+
+  elif [ "$OPTION_CHOLESTEROL" ]; then
+    cholesterol_add "$OPTION_CHOLESTEROL";
 
   elif [ "$OPTION_SYNC" != "" ]; then
     sync "$OPTION_SYNC";
@@ -743,6 +906,9 @@ function main() {
     log
     log "Urine acid:";
     list_urine_acid "$LIST";
+    log
+    log "Cholesterol:";
+    list_cholesterol "$LIST";
 
   elif [ "$LIST_PRESSURE" != "" ]; then
     list_pressure "$LIST_PRESSURE";
@@ -752,6 +918,9 @@ function main() {
 
   elif [ "$LIST_URINE_ACID" != "" ]; then
     list_urine_acid "$LIST_URINE_ACID";
+
+  elif [ "$LIST_CHOLESTEROL" != "" ]; then
+    list_cholesterol "$LIST_CHOLESTEROL";
 
   else
     error "ERROR: Not enough parameters!"
