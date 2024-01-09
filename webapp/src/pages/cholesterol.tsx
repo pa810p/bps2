@@ -8,7 +8,7 @@ import i18n from "i18next";
 import { useTranslation } from "react-i18next";
 
 
-export const renderCholesterol = () => {
+export const Cholesterol = () => {
     const { t } = useTranslation('translation')
     console.log("Cholesterol render")
 
@@ -18,13 +18,13 @@ export const renderCholesterol = () => {
 
     return (
         <AppBar position="static">
-        <Container maxWidth="lg">
-            <Toolbar>
-                <Typography sx={{flexGrow: 1, fontWeight: 700}}>
-                    {t('cholesterol')}
-                </Typography>
-            </Toolbar>
-        </Container>
+            <Container maxWidth="lg">
+                <Toolbar>
+                    <Typography sx={{flexGrow: 1, fontWeight: 700}}>
+                        {t('cholesterol')}
+                    </Typography>
+                </Toolbar>
+            </Container>
         </AppBar>
     )
 }

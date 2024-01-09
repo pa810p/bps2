@@ -14,10 +14,8 @@ import MenuItem from '@mui/material/MenuItem';
 import i18n from "i18next";
 import { useTranslation, initReactI18next } from "react-i18next";
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
-
-import { Link } from 'react-router-dom';
 import { SvgIcon } from "@mui/material";
 
 
@@ -28,25 +26,6 @@ import { ReactComponent as FlagEU } from './eu.svg';
 import { ReactComponent as IconSmile} from './smile.svg';
 
 let localeFlag = <FlagEU />
-
-const pages = ['Home'];
-const settings = ['Graphs', 'Units', 'Dashboard'];
-
-function setLanguage(lang: string) {
-    console.log('Language: ' + lang)
-    switch (lang) {
-        case 'GB': localeFlag = <FlagGB />;
-            i18n.changeLanguage('gb')
-            break;
-        case 'DE': localeFlag = <FlagDE />;
-            i18n.changeLanguage('de')
-            break;
-        case 'PL': localeFlag = <FlagPL />;
-            i18n.changeLanguage('pl')
-            break;
-        default: localeFlag = <FlagEU />
-    }
-}
 
 i18n
     .use(initReactI18next) // passes i18n down to react-i18next
@@ -79,7 +58,34 @@ i18n
         }
     });
 
-export const renderBloodNavBar = () => {
+
+
+i18n.addResource('gb', 'translation', 'pressure', 'Pressure');
+i18n.addResource('de', 'translation', 'pressure', 'Druck');
+i18n.addResource('pl', 'translation', 'pressure', 'Ciśnienie');
+
+
+const pages = ['Home'];
+const settings = ['Graphs', 'Units', 'Dashboard'];
+
+function setLanguage(lang: string) {
+    console.log('Language: ' + lang)
+    switch (lang) {
+        case 'GB': localeFlag = <FlagGB />;
+            i18n.changeLanguage('gb')
+            break;
+        case 'DE': localeFlag = <FlagDE />;
+            i18n.changeLanguage('de')
+            break;
+        case 'PL': localeFlag = <FlagPL />;
+            i18n.changeLanguage('pl')
+            break;
+        default: localeFlag = <FlagEU />
+    }
+}
+
+
+export const RenderBloodNavBar : React.FC = () => {
     console.log("renderBloodNavBar")
     const { t } = useTranslation('translation')
     const navigate = useNavigate();
@@ -229,12 +235,12 @@ export const renderBloodNavBar = () => {
                     {/* {pages.map((page) => ( */}
                     <MenuItem>  {/* onClick={handleCloseNavMenu} */}
                         <Typography textAlign="center">
-                            <Link style={{ textDecoration: "none", color: "white" }} to="pressure">{t("pressure")}</Link>
+                            <Link style={{ textDecoration: "none", color: "white" }} to="/pressure">{t("pressure")}</Link>
                         </Typography>
                     </MenuItem>
                     <MenuItem>
                         <Typography textAlign="center">
-                            <Link style={{ textDecoration: "none", color: "white" }} to="sugar">{t("sugar")}</Link>
+                            <Link style={{ textDecoration: "none", color: "white" }} to="/sugar">{t("sugar")}</Link>
                         </Typography>
                     </MenuItem>
                     {/*

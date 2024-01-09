@@ -8,9 +8,9 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import i18n from "i18next";
 import { useTranslation } from "react-i18next";
-import { lightBlue } from '@mui/material/colors';
+// import { lightBlue } from '@mui/material/colors';
              
-export const renderPressure = () => {
+export const Pressure : React.FC = () => {
     const { t } = useTranslation('translation')
 
     console.log("Pressure render")
@@ -19,20 +19,15 @@ export const renderPressure = () => {
     i18n.addResource('de', 'translation', 'pressure', 'Druck');
     i18n.addResource('pl', 'translation', 'pressure', 'Ciśnienie');
 
-    // const [valid, setValid] = useState(false)
-    
-    let valid = false;
+    const [valid, setValid] = useState(false)
 
-    const handlePressureValidation = (value: React.FormEvent<HTMLInputElement>) => {
-        const reg = new RegExp("[0-9]{2,3}/[0-9]{2,3}/[0-9]{2,3}")
-        
-        console.log(value);
-        valid = true;
-        // setValid(true);
-        
+    const handlePressureValidation = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const reg = /^\d{2,3}\/\d{2,3}\/\d{2,3}$/
+        console.log(e.target.value);
+        setValid(reg.test(e.target.value));
     }
 
-    const white = lightBlue[50];
+//     const white = lightBlue[50];
 
     return (
        <AppBar position="static" style={{ background:"lightBlue" }}>

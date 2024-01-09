@@ -8,7 +8,7 @@ import i18n from "i18next";
 import { useTranslation } from "react-i18next";
 
 
-export const renderUrineAcid = () => {
+export const UrineAcid : React.FC = () => {
     const { t } = useTranslation('translation')
     console.log("Urine acid render")
 

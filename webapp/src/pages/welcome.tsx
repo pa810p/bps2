@@ -1,9 +1,7 @@
 import React from "react";
 
-import Typography from "@mui/material/Typography";
 import AppBar from "@mui/material/AppBar";
 import Container from "@mui/material/Container";
-import Toolbar from "@mui/material/Toolbar";
 import i18n from "i18next";
 import { useTranslation } from "react-i18next";
 import Grid from "@mui/material/Grid";
@@ -11,7 +9,7 @@ import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";
 
 
-export const renderWelcome = () => {
+export const Welcome = () => {
     const { t } = useTranslation('translation')
     
     console.log("Welcome render")
