@@ -14,9 +14,9 @@ export const Sugar : React.FC = () => {
     const { t } = useTranslation('translation')
     console.log("Sugar render")
 
-    i18n.addResource('gb', 'translation', 'sugar', 'Sugar');
-    i18n.addResource('de', 'translation', 'sugar', 'Zucker');
-    i18n.addResource('pl', 'translation', 'sugar', 'Cukier');
+    i18n.addResource('gb', 'translation', 'sugar_mg', 'Sugar [mg/dL]');
+    i18n.addResource('de', 'translation', 'sugar_mg', 'Zucker [mg/dL]');
+    i18n.addResource('pl', 'translation', 'sugar_mg', 'Cukier [mg/dL]');
 
     i18n.addResource('gb', 'translation', 'ok', 'OK');
     i18n.addResource('de', 'translation', 'ok', 'OK');
@@ -28,18 +28,24 @@ export const Sugar : React.FC = () => {
 
 
     const [valid, setValid] = useState(false)
-    // const [memValid] = useMemo( () => {
-    //     return [valid];
-    //  }, [valid] );
 
-    // let valid = false;
+//     const [sugar, setSugar] = useState();
+//     const [comment, setComment] = useState();
     
     const handleSugarLevelValidation = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const reg = /^[0-2]?\d{2}$/;
 
-        console.log(e.target.value);
+        console.debug(e.target.value);
         setValid(reg.test(e.target.value));
-        // valid = reg.test(e.target.value)
+    }
+
+    const handleSubmitButton = () => {
+        console.debug('handleSubmitButton');
+//         if (!valid) {
+//
+//         } else {
+//
+//         }
     }
 
     return (
@@ -47,11 +53,11 @@ export const Sugar : React.FC = () => {
         <Container maxWidth="lg">
             <Toolbar>
                 <Typography sx={{flexGrow: 1, fontWeight: 700}}>
-                    {t('sugar')}
+                    {t('sugar_mg')}
                 </Typography>
                 <TextField
                     onChange={(event) => handleSugarLevelValidation(event)}
-                    label="Sugar level [mg/dL]"
+                    label="0-299"
                     variant="outlined"
                     error={!valid}
                     sx={{ mb: 2 }}
@@ -62,7 +68,11 @@ export const Sugar : React.FC = () => {
                     variant="outlined"
                     sx={{mb: 2}}
                     />
-                <Button color="inherit">{t('ok')}</Button>
+                <Button color="inherit"
+                    onClick={handleSubmitButton}
+                    disabled={!valid}>
+                        {t('ok')}
+                </Button>
             </Toolbar>
         </Container>
         </AppBar>

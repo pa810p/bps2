@@ -21,7 +21,6 @@ export const App: React.FC = () => {
           <Route path="/cholesterol" element={<Cholesterol />} />
           <Route path="/sugar" element={<Sugar />} />
           <Route path="/charts" element={<Charts />} />
-
         </Routes>
     </Router>
     

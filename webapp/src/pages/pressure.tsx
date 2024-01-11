@@ -9,7 +9,7 @@ import Button from "@mui/material/Button";
 import i18n from "i18next";
 import { useTranslation } from "react-i18next";
 // import { lightBlue } from '@mui/material/colors';
-             
+
 export const Pressure : React.FC = () => {
     const { t } = useTranslation('translation')
 
