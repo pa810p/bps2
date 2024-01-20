@@ -9,7 +9,7 @@ directory. There is possibility to synchronize blood.db with postgresql server.
 ### Prerequisites
 
 - [sqlite3](https://www.sqlite.org/)
-- [postgresql](https://www.postgresql.org/) (:hand: optional)
+- [postgresql](https://www.postgresql.org/) ( :hand: optional)
 - [bash](https://www.gnu.org/software/bash/)
 
 ### Install BPS2
@@ -47,7 +47,7 @@ Using: blood.properties
 Executing query: SELECT * FROM blood;
 2023-10-29 14:50:13|123|80|90|
 ````
-- postgresql (:hand: optional)
+- postgresql ( :hand: optional)
 Create role and database on your postgresql system or ask administrator to create it: 
 ````
 postgres=# CREATE USER blood WITH ENCRYPTED PASSWORD 'password';
