@@ -4,25 +4,30 @@ import { Routes, Route, Link } from "react-router-dom";
 
 import './App.css';
 
-import { renderSugar } from "./pages/sugar";
-import { renderPressure } from "./pages/pressure";
-import { renderWelcome } from "./pages/welcome";
-import { renderCholesterol } from "./pages/cholesterol";
-import { renderUrineAcid } from "./pages/urine_acid";
-import { renderBloodNavBar } from "./components/BloodNavBar";
-import { renderCharts } from "./pages/charts";
+import { RenderSugar } from "./pages/sugar";
+import { RenderPressure } from "./pages/pressure";
+import { RenderWelcome } from "./pages/welcome";
+import { RenderCholesterol } from "./pages/cholesterol";
+import { RenderUrineAcid } from "./pages/urine_acid";
+import { RenderBloodNavBar } from "./components/BloodNavBar";
+import { RenderCharts } from "./pages/charts";
 
 export const App = () => {
+
+  useEffect(() => {
+    document.title = 'BPS2';
+  }, []);
+
   return (
     <div>
-      { renderBloodNavBar() }  
+      { RenderBloodNavBar() }  
       <Routes>
-        <Route path="/" element={renderWelcome()}></Route>
-        <Route path="/pressure" element={renderPressure()}></Route>
-        <Route path="/sugar" element={renderSugar()}></Route>
-        <Route path="/urine_acid" element={renderUrineAcid()}></Route>
-        <Route path="/cholesterol" element={renderCholesterol()}></Route>
-        <Route path="/charts" element={renderCharts()}></Route>
+        <Route path="/" element={RenderWelcome()}></Route>
+        <Route path="/pressure" element={RenderPressure()}></Route>
+        <Route path="/sugar" element={RenderSugar()}></Route>
+        <Route path="/urine_acid" element={RenderUrineAcid()}></Route>
+        <Route path="/cholesterol" element={RenderCholesterol()}></Route>
+        <Route path="/charts" element={RenderCharts()}></Route>
       </Routes>  
     </div>
   )

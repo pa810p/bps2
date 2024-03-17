@@ -11,7 +11,7 @@ import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";
 
 
-export const renderWelcome = () => {
+export const RenderWelcome = () => {
     const { t } = useTranslation('translation')
     
     console.log("Welcome render")

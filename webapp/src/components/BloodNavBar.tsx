@@ -79,7 +79,7 @@ i18n
         }
     });
 
-export const renderBloodNavBar = () => {
+export const RenderBloodNavBar = () => {
     console.log("renderBloodNavBar")
     const { t } = useTranslation('translation')
     const navigate = useNavigate();

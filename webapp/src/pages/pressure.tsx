@@ -10,7 +10,7 @@ import i18n from "i18next";
 import { useTranslation } from "react-i18next";
 import { lightBlue } from '@mui/material/colors';
              
-export const renderPressure = () => {
+export const RenderPressure = () => {
     const { t } = useTranslation('translation')
 
     console.log("Pressure render")
@@ -24,7 +24,7 @@ export const renderPressure = () => {
     let valid = false;
 
     const handlePressureValidation = (value: React.FormEvent<HTMLInputElement>) => {
-        const reg = new RegExp("[0-9]{2,3}/[0-9]{2,3}/[0-9]{2,3}")
+//         const reg = new RegExp("[0-9]{2,3}/[0-9]{2,3}/[0-9]{2,3}")
         
         console.log(value);
         valid = true;
@@ -32,7 +32,7 @@ export const renderPressure = () => {
         
     }
 
-    const white = lightBlue[50];
+//     const white = lightBlue[50];
 
     return (
        <AppBar position="static" style={{ background:"lightBlue" }}>
