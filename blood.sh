@@ -8,7 +8,8 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.2
+VERSION=1.2.1
+
 
 ######################################
 # Displays Usage information and exit
@@ -24,6 +25,7 @@ function helpme() {
   echo "-C --import-cholesterol FILENAME     import cholesterol from csv FILENME";
 	echo "-D --dbname DATABASE_NAME            database name";
 	echo "-e --engine DATABASE_ENGINE          database engine can be either sqlite or pgsql";
+	echo "-f --format                         format display (column names, formatting, colors)";
 	echo "-h --help                            help screen";
 	echo "-H --host DATABASE_HOST              database host";
 	echo "-i --initialize INIT_FILENAME        initialize filename";
@@ -139,11 +141,18 @@ function query() {
 
 	case $DB_ENGINE in
 		"sqlite" )
-			echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
+		  if [[ "$FORMAT" == "true" ]]; then _MODE=".mode column";
+		  else _MODE="";
+		  fi
+
+			$SQLITE "$DATABASE_NAME.db" "$_MODE" "$_QUERY";
 		;;
 		"pgsql" )
+		  if [[ "$FORMAT" == "true" ]]; then _MODE="";
+		  else _MODE="-t";
+		  fi
 			_COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
-			$_COMMAND -c "$_QUERY";
+			$_COMMAND $_MODE -c "$_QUERY";
 		;;
 		* )
 			warn "Only sqlite and pgsql is supported right now.";
@@ -727,7 +736,7 @@ function main() {
   source "$DIRNAME/$_BLOOD_PROPERTIES";
   if [ $# -eq 0 ]; then
     log "Trying to use ~/.bps2/blood.properties";
-    source "~/.bps2/blood.properties"
+    source "$HOME/.bps2/blood.properties"
     DIRNAME="$HOME/.bps2/";
     DATABASE_NAME="$DIRNAME/$DATABASE_NAME"
   fi
@@ -775,6 +784,13 @@ function main() {
           else missing_parameter_error "$1";
           fi
         ;;
+      -f | --format )
+          FORMAT="true";
+          # ansi formatting codes
+          COLOR_GREEN="\u001b[32;1m"
+          COLOR_RESET="\u001b[0m"
+          shift ;
+          ;;
       -h | --help ) helpme; exit 0;;
       -H | --host )
           if [ "$2" != "" ]; then readonly DATABASE_HOST=$2; shift 2 ;
@@ -898,16 +914,16 @@ function main() {
   elif [ "$LIST" != "" ]; then
     debug "LIST=$LIST"
     log
-    log "Pressure:";
+    log "${COLOR_GREEN}Pressure:${COLOR_RESET}";
     list_pressure "$LIST";
     log
-    log "Sugar:";
+    log "${COLOR_GREEN}Sugar:${COLOR_RESET}";
     list_sugar "$LIST";
     log
-    log "Urine acid:";
+    log "${COLOR_GREEN}Urine acid:${COLOR_RESET}";
     list_urine_acid "$LIST";
     log
-    log "Cholesterol:";
+    log "${COLOR_GREEN}Cholesterol:${COLOR_RESET}";
     list_cholesterol "$LIST";
 
   elif [ "$LIST_PRESSURE" != "" ]; then
