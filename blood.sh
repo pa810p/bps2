@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.2.1
+VERSION=1.2.2
 
 
 ######################################
@@ -25,7 +25,7 @@ function helpme() {
   echo "-C --import-cholesterol FILENAME     import cholesterol from csv FILENME";
 	echo "-D --dbname DATABASE_NAME            database name";
 	echo "-e --engine DATABASE_ENGINE          database engine can be either sqlite or pgsql";
-	echo "-f --format                         format display (column names, formatting, colors)";
+	echo "-f --format                          format display (column names, formatting, colors)";
 	echo "-h --help                            help screen";
 	echo "-H --host DATABASE_HOST              database host";
 	echo "-i --initialize INIT_FILENAME        initialize filename";
@@ -803,7 +803,7 @@ function main() {
           fi
         ;;
       -l | --list )
-          if [ "$2" != "" ]; then readonly LIST=$2; shift 2;
+          if [[ $2 =~ ^[0-9]+$ ]]; then readonly LIST=$2; shift 2;
           else readonly LIST=$LIST_ENTRIES; shift;
           fi
         ;;
