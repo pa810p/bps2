@@ -108,6 +108,7 @@ OPTIONS include:
 -A --import-urine-acid FILENAME     import urine acid from csv FILENAME
 -D --dbname DATABASE_NAME           database name
 -e --engine DATABASE_ENGINE         database engine can be either sqlite or pgsql
+-f --format                         format display (column names, formatting, colors)
 -h --help                           help screen
 -H --host DATABASE_HOST             database host
 -i --initialize INIT_FILENAME       initialize filename
