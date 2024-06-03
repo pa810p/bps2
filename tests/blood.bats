@@ -99,9 +99,27 @@ init_pgsql_database() {
   init_sqlite_database;
   run $BLOOD -s 123
 
-  run $BLOOD -q "SELECT sugar FROM sugar ORDER BY datetime DESC limit 1;" -e sqlite;
+  run $BLOOD -q "SELECT sugar FROM sugar ORDER BY datetime DESC LIMIT 1;" -e sqlite;
 
   echo "123" | assert_output;
+}
+
+@test "should add valid sugar level with timestamp '2024-06-03 18:35' to sqlite" {
+  init_sqlite_database;
+  run $BLOOD -s 123 -t '2024-06-03 18:35'
+
+  run $BLOOD -q "SELECT sugar, datetime FROM sugar ORDER BY datetime DESC LIMIT 1;" -e sqlite;
+
+  assert_output --partial "2024-06-03 18:35"
+}
+
+@test "should add valid sugar level with time '19:16' to sqlite" {
+  init_sqlite_database;
+  run $BLOOD -s 123 -t '19:16'
+
+  run $BLOOD -q "SELECT sugar, datetime FROM sugar ORDER BY datetime DESC LIMIT 1;" -e sqlite;
+  
+  assert_output --partial "19:16"
 }
 
 @test "should add valid sugar level with comment to sqlite" {
@@ -130,6 +148,25 @@ init_pgsql_database() {
   echo "123" | assert_output;
 }
 
+@test "should add valid urine acid level with timestamp '2024-06-03 18:35' to sqlite" {
+  init_sqlite_database;
+  run $BLOOD -a 123 -t '2024-06-03 18:35'
+
+  run $BLOOD -q "SELECT urine, datetime FROM urine_acid ORDER BY datetime DESC LIMIT 1;" -e sqlite;
+
+  assert_output --partial "2024-06-03 18:35"
+}
+
+@test "should add valid urine acid level with time '19:16' to sqlite" {
+  init_sqlite_database;
+  run $BLOOD -a 123 -t '19:16'
+
+  run $BLOOD -q "SELECT urine, datetime FROM urine_acid ORDER BY datetime DESC LIMIT 1;" -e sqlite;
+  
+  assert_output --partial "19:16"
+}
+
+
 @test "should add valid urine acid level with comment to sqlite" {
   init_sqlite_database;
   run $BLOOD -a 123/'some comment'
@@ -155,6 +192,25 @@ init_pgsql_database() {
 
   echo "123" | assert_output;
 }
+
+@test "should add valid cholesterol level with timestamp '2024-06-03 18:35' to sqlite" {
+  init_sqlite_database;
+  run $BLOOD -c 123 -t '2024-06-03 18:35'
+
+  run $BLOOD -q "SELECT cholesterol, datetime FROM cholesterol ORDER BY datetime DESC LIMIT 1;" -e sqlite;
+
+  assert_output --partial "2024-06-03 18:35"
+}
+
+@test "should add valid cholesterol level with time '19:16' to sqlite" {
+  init_sqlite_database;
+  run $BLOOD -c 123 -t '19:16'
+
+  run $BLOOD -q "SELECT cholesterol, datetime FROM cholesterol ORDER BY datetime DESC LIMIT 1;" -e sqlite;
+  
+  assert_output --partial "19:16"
+}
+
 
 @test "should add valid cholesterol level with comment to sqlite" {
   init_sqlite_database;
@@ -265,7 +321,7 @@ init_pgsql_database() {
 
   run $BLOOD -s 123 -e pgsql;
 
-  run $BLOOD -q "SELECT sugar FROM sugar ORDER BY datetime DESC limit 1;" -e pgsql;
+  run $BLOOD -q "SELECT sugar FROM sugar ORDER BY datetime DESC LIMIT 1;" -e pgsql;
 
   assert_output --partial "123";
 }
@@ -275,9 +331,29 @@ init_pgsql_database() {
 
   run $BLOOD -s 123/'some comment' -e pgsql;
 
-  run $BLOOD -q "SELECT sugar, comment FROM sugar ORDER BY datetime DESC limit 1;" -e pgsql;
+  run $BLOOD -q "SELECT sugar, comment FROM sugar ORDER BY datetime DESC LIMIT 1;" -e pgsql;
 
   assert_output --partial "123 | some comment";
+}
+
+@test "should add valid sugar level with timestamp '2024-06-03 18:13' to pgsql" {
+  init_pgsql_database;
+
+  run $BLOOD -s 123 -t '2024-06-03 18:13' -e pgsql;
+
+  run $BLOOD -q "SELECT sugar, datetime FROM sugar ORDER BY datetime DESC LIMIT 1;" -e pgsql;
+
+  assert_output --partial "2024-06-03 18:13";
+}
+
+@test "should add valid sugar level with time '21:32' to pgsql" {
+  init_pgsql_database;
+
+  run $BLOOD -s 123 -t '21:32' -e pgsql;
+
+  run $BLOOD -q "SELECT sugar, datetime FROM sugar ORDER BY datetime DESC LIMIT 1;" -e pgsql;
+
+  assert_output --partial "21:32";
 }
 
 @test "should fail on invalid sugar level to pgsql" {
@@ -483,7 +559,8 @@ import_sample_cholesterol() {
   import_sample_urine_acid
   import_sample_cholesterol
 
-  result="$(run $BLOOD -l 2)"
+  result="$($BLOOD -l 2 --log-level debug)";
+
 
   grep -q "100|80|84|fourth pressure" <<< "$result"
   grep -q "100|80|83|third pressure" <<< "$result"

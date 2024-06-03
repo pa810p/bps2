@@ -15,5 +15,5 @@ RUN apt-get -y install postgresql
 #	CREATE USER blood WITH PASSWORD 'bloodme'; \
 #	GRANT ALL PRIVILEDGES ON blood TO blood;"
 
-CMD /bin/bash /opt/tests/bats/bin/bats --verbose-run /opt/tests/blood.bats
+CMD /bin/bash /opt/tests/bats/bin/bats --print-output-on-failure --verbose-run /opt/tests/blood.bats
 
