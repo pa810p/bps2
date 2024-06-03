@@ -44,6 +44,8 @@ function helpme() {
   echo "                                     where 'comment' is optional";
   echo "-S --import-sugar FILENAME           import sugar from csv FILENAME";
   echo "                                     where 'comment' is optional";
+  echo "-t --time TIME                       sets time in format 'yyyy-MM-dd HH:mm' or 'HH:mm'";
+  echo "                                     if 'HH:mm' format is used date is set to today";
 	echo "-U --user USERNAME                   database user name";
 	echo "-v --version                         displays version information and exits";
 	echo "-X --sync SOURCE:DESTINATION         synchronize databases (copy data from SOURCE to DESTINATION database";
@@ -52,6 +54,8 @@ function helpme() {
 	echo "Example: ";
 	echo "./blood.sh -e pgsql -i createdb.sql";
   echo "./blood.sh -p 123/80/90/'my fancy comment'";
+  echo "./blood.sh -p 123/80/90/'my fancy comment' -t '2024-05-30 06:26'";
+  echo "./blood.sh -p 123/80/90/'my fancy comment\ -t '06:31'";
 }
 
 ######################################
@@ -169,7 +173,6 @@ function query() {
 #  number of entries to receive
 ######################################################
 function list_pressure() {
-
   readonly _LIST_PRESSURE=$1;
 
   query "SELECT * FROM $PRESSURE_TABLE ORDER BY datetime DESC LIMIT $_LIST_PRESSURE";
@@ -224,6 +227,46 @@ function list_cholesterol() {
 
 }
 
+###########################################################
+# validates and composes given time in format as follow
+# 'yyyy-MM-dd HH:mm'
+# 'HH:mm'
+# to sql valid format
+# if format is invalid or empty then current time 'now' is returned
+# Globals:
+#   DB_ENGINE
+# Arguments:
+#   time string to be validated
+###########################################################
+function sql_time() {
+  readonly _TIME=$1;
+
+  _VALID=`echo $_TIME | grep -G "^20[2-4][0-9]-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-5][0-9]$"`;
+  if [[ "$_VALID" != "" ]]; then
+    echo "'$_TIME'";
+    return
+  fi
+
+  _VALID=`echo $_TIME | grep -G "^[0-2][0-9]:[0-5][0-9]$"`;
+  if [[ "$_VALID" != "" ]]; then
+    echo "'`date +'%Y-%m-%d'` $_TIME'"
+    return
+  fi
+
+  case $DB_ENGINE in
+    "sqlite" )
+      echo "strftime('%Y-%m-%d %H:%M:%f','now', 'localtime')";
+    ;;
+    "pgsql" )
+      echo "'now'";
+    ;;
+	* )
+			warn "Only sqlite and pgsql is supported right now.";
+    ;;
+  esac
+
+}
+
 ############################################
 # Adds entry to blood table
 # Globals:
@@ -242,6 +285,7 @@ function list_cholesterol() {
 function pressure_add() {
 	# validate input
 	readonly _MEASUREMENT=$1;
+	readonly _PRESSURE_TIME=$2;
 
 	if [ "$_MEASUREMENT" = "" ] ; then
 		helpme
@@ -265,11 +309,13 @@ function pressure_add() {
 	if ! [[ $_DIASTOLIC =~ ^[0-9]+$ ]] ; then fail "Diastolic" "$_DIASTOLIC"; fi
 	if ! [[ $_PULSE =~ ^[0-9]+$ ]] ; then fail "Pulse" "$_PULSE"; fi
 
+  _SQL_TIME=$(sql_time $_PRESSURE_TIME)
+
 	case $DB_ENGINE in
 		"sqlite" )
 			_QUERY="INSERT INTO $PRESSURE_TABLE (
 				datetime, systolic, diastolic, pulse, comment) VALUES (
-				strftime('%Y-%m-%d %H:%M:%f','now', 'localtime'), $_SYSTOLIC, $_DIASTOLIC, $_PULSE, \"$_COMMENT\"
+				$_SQL_TIME, $_SYSTOLIC, $_DIASTOLIC, $_PULSE, \"$_COMMENT\"
 			);"
 			
 			echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
@@ -277,7 +323,7 @@ function pressure_add() {
 		"pgsql" )
 			_QUERY="INSERT INTO $PRESSURE_TABLE (
 				datetime, systolic, diastolic, pulse, comment) VALUES (
-				'now', $_SYSTOLIC, $_DIASTOLIC, $_PULSE, '$_COMMENT'
+				$_SQL_TIME, $_SYSTOLIC, $_DIASTOLIC, $_PULSE, '$_COMMENT'
 			);"
 			
 			_COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
@@ -306,6 +352,7 @@ function pressure_add() {
 ############################################
 function sugar_add() {
   readonly _MEASUREMENT=$1;
+	readonly _SUGAR_TIME=$2;
   
   if [ "$_MEASUREMENT" = "" ] ; then
     helpme
@@ -318,19 +365,21 @@ function sugar_add() {
   info "Sugar: \"$_SUGAR\"";
 
   if ! [[ "$_SUGAR" =~ ^[0-9]+$ ]] ; then fail "sugar" "$_SUGAR"; fi
-
+      
+  _SQL_TIME=$(sql_time "$_SUGAR_TIME");
+  
   case $DB_ENGINE in
     "sqlite" )
       _QUERY="INSERT INTO $SUGAR_TABLE (
         datetime, sugar, comment) VALUES (
-				strftime('%Y-%m-%d %H:%M:%f','now', 'localtime'), $_SUGAR, \"$_COMMENT\");"
+				$_SQL_TIME, $_SUGAR, \"$_COMMENT\");"
 
       echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
     ;;
     "pgsql" )
       _QUERY="INSERT INTO $SUGAR_TABLE (
         datetime, sugar, comment) VALUES (
-        'now', $_SUGAR, '$_COMMENT');"
+        $_SQL_TIME, $_SUGAR, '$_COMMENT');"
 			
       _COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
       $_COMMAND -c "$_QUERY";
@@ -358,6 +407,7 @@ function sugar_add() {
 ############################################
 function urine_acid_add() {
   readonly _MEASUREMENT=$1;
+  readonly _URINE_ACID_TIME=$2;
 
   if [ "$_MEASUREMENT" = "" ]; then
     helpme
@@ -371,18 +421,20 @@ function urine_acid_add() {
 
   if ! [[ "$_URINE_ACID" =~ ^[0-9]+$ ]] ; then fail "urine acid" "$_URINE_ACID"; fi
 
+  _SQL_TIME=$(sql_time "$_URINE_ACID_TIME");
+
   case $DB_ENGINE in
     "sqlite" )
       _QUERY="INSERT INTO $URINE_ACID_TABLE (
         datetime, urine, comment) VALUES (
-    	  strftime('%Y-%m-%d %H:%M:%f','now', 'localtime'), $_URINE_ACID, \"$_COMMENT\");"
+    	  $_SQL_TIME, $_URINE_ACID, \"$_COMMENT\");"
 
       echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
     ;;
     "pgsql" )
       _QUERY="INSERT INTO $URINE_ACID_TABLE (
         datetime, urine, comment) VALUES (
-            'now', $_URINE_ACID, '$_COMMENT');"
+            $_SQL_TIME, $_URINE_ACID, '$_COMMENT');"
 
       _COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
       $_COMMAND -c "$_QUERY";
@@ -410,6 +462,7 @@ function urine_acid_add() {
 ############################################
 function cholesterol_add() {
   readonly _MEASUREMENT=$1;
+  readonly _CHOLESTEROL_TIME=$2
 
   if [ "$_MEASUREMENT" = "" ]; then
     helpme
@@ -423,18 +476,20 @@ function cholesterol_add() {
 
   if ! [[ "$_CHOLESTEROL" =~ ^[0-9]+$ ]] ; then fail "cholesterol" "$_CHOLESTEROL"; fi
 
+  _SQL_TIME=$(sql_time "$_CHOLESTEROL_TIME")
+
   case $DB_ENGINE in
     "sqlite" )
       _QUERY="INSERT INTO $CHOLESTEROL_TABLE (
         datetime, cholesterol, comment) VALUES (
-    	  strftime('%Y-%m-%d %H:%M:%f','now', 'localtime'), $_CHOLESTEROL, \"$_COMMENT\");"
+    	  $_SQL_TIME, $_CHOLESTEROL, \"$_COMMENT\");"
 
       echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
     ;;
     "pgsql" )
       _QUERY="INSERT INTO $CHOLESTEROL_TABLE (
         datetime, cholesterol, comment) VALUES (
-            'now', $_CHOLESTEROL, '$_COMMENT');"
+            $_SQL_TIME, $_CHOLESTEROL, '$_COMMENT');"
 
       _COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
       $_COMMAND -c "$_QUERY";
@@ -857,6 +912,11 @@ function main() {
           else missing_parameter_error "$1";
           fi
         ;;
+      -t | --time )
+          if [ "$2" != "" ]; then readonly OPTION_TIME=$2; shift 2 ;
+          else missing_parameter_error "$1"; shift ;
+          fi
+        ;;
       -U | --user )
           if [ "$2" != "" ]; then readonly USER=$2; shift 2 ;
           else missing_parameter_error "$1";
@@ -894,16 +954,16 @@ function main() {
     import_cholesterol "$DB_ENGINE" "$IMPORT_CHOLESTEROL";
 
   elif [ "$OPTION_PRESSURE" != "" ]; then
-    pressure_add "$OPTION_PRESSURE";
+    pressure_add "$OPTION_PRESSURE" "$OPTION_TIME";
 
   elif [ "$OPTION_SUGAR" ]; then
-    sugar_add "$OPTION_SUGAR";
+    sugar_add "$OPTION_SUGAR" "$OPTION_TIME";
 
   elif [ "$OPTION_URINE_ACID" ]; then
-    urine_acid_add "$OPTION_URINE_ACID";
+    urine_acid_add "$OPTION_URINE_ACID" "$OPTION_TIME";
 
   elif [ "$OPTION_CHOLESTEROL" ]; then
-    cholesterol_add "$OPTION_CHOLESTEROL";
+    cholesterol_add "$OPTION_CHOLESTEROL" "$OPTION_TIME";
 
   elif [ "$OPTION_SYNC" != "" ]; then
     sync "$OPTION_SYNC";
