@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.2.3
+VERSION=1.2.4
 
 
 ######################################
@@ -522,7 +522,7 @@ function init() {
 		;;
 		"pgsql" )
 			# TODO: validate
-			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME < $INIT_FILENAME";
+			info "$PGSQL postgresql://$DATABASE_USER:xxxxxxxx@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME < $INIT_FILENAME";
 			$PGSQL "postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME" < "$INIT_FILENAME";
 			;;
 		* ) ;;
@@ -557,7 +557,7 @@ function import_pressure() {
 			$SQLITE "$DATABASE_NAME.db" ".separator ','" ".mode csv" ".import $_FILE $PRESSURE_TABLE" ".exit"
 		;;
 		"pgsql" )
-			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+			info "$PGSQL postgresql://$DATABASE_USER:xxxxxxxx@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
 			info "-c \"\\COPY tmp_$PRESSURE_TABLE(datetime, systolic, diastolic, pulse, comment) FROM $_FILE DELIMITER ',' CSV\";";
 			_COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
 
@@ -598,7 +598,7 @@ function import_sugar() {
 			$SQLITE "$DATABASE_NAME.db" ".separator ','" ".mode csv" ".import $_FILE $SUGAR_TABLE" ".exit"
 		;;
 		"pgsql" )
-			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+			info "$PGSQL postgresql://$DATABASE_USER:xxxxxxxx@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
 			info "-c \"\\COPY tmp_$SUGAR_TABLE(datetime, sugar, comment) FROM $_FILE DELIMITER ',' CSV\";";
 			COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
 
@@ -639,7 +639,7 @@ function import_urine_acid() {
 			$SQLITE "$DATABASE_NAME.db" ".separator ','" ".mode csv" ".import $_FILE $URINE_ACID_TABLE" ".exit"
 		;;
 		"pgsql" )
-			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+			info "$PGSQL postgresql://$DATABASE_USER:xxxxxxxx@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
 			info "-c \"\\COPY tmp_$URINE_ACID_TABLE(datetime, urine, comment) FROM $_FILE DELIMITER ',' CSV\";";
 			COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
 
@@ -680,7 +680,7 @@ function import_cholesterol() {
 			$SQLITE "$DATABASE_NAME.db" ".separator ','" ".mode csv" ".import $_FILE $CHOLESTEROL_TABLE" ".exit"
 		;;
 		"pgsql" )
-			info "$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
+			info "$PGSQL postgresql://$DATABASE_USER:xxxxxxxx@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
 			info "-c \"\\COPY tmp_$CHOLESTEROL_TABLE(datetime, cholesterol, comment) FROM $_FILE DELIMITER ',' CSV\";";
 			COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
 
