@@ -50,7 +50,7 @@ init_sqlite_database() {
 init_pgsql_database() {
   run $BLOOD -i createdb.sql -e pgsql
 
-  assert_output --partial "psql postgresql://postgres:postgres@db:5432/postgres < createdb.sql";
+  assert_output --partial "psql postgresql://postgres:xxxxxxxx@db:5432/postgres < createdb.sql";
   assert_output --partial "CREATE SEQUENCE";
   assert_output --partial "CREATE TABLE";
 }
