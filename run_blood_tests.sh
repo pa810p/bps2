@@ -7,6 +7,7 @@
 #################################################################
 
 cp blood.sh ./tests/
+cp blood_functions.sh ./tests/
 cp createdb.sql ./tests/
 cp createdb.sqlite ./tests/
 cp blood_test.properties ./tests/blood.properties
@@ -21,6 +22,7 @@ docker network remove blood
 cd ..
 
 rm ./tests/blood.sh
+rm ./tests/blood_functions.sh
 rm ./tests/createdb.sql
 rm ./tests/createdb.sqlite
 rm ./tests/blood.properties
