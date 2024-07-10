@@ -101,8 +101,7 @@ Executing query: SELECT * FROM blood;
 
 ````
 $ ./blood.sh
-
-Version: 1.2.5
+Version: 1.2.6
 Usage: ./blood.sh [OPTIONS]
 OPTIONS include:
 -a --urine-acid URINE_ACID           urine acid in blood in µmol/l using format of: 370/'comment'
@@ -129,6 +128,8 @@ OPTIONS include:
 -q --query QUERY                     SQL query provided to sqlite database (query should correspond with engine -e option)
 -s --sugar SUGAR_LEVEL               sugar level in blood in mg/dL using format of: 123/'comment'
                                      where 'comment' is optional
+   --empty                           measurement on empty stomach
+   --full                            measurement on full stomach
 -S --import-sugar FILENAME           import sugar from csv FILENAME
                                      where 'comment' is optional
 -t --time TIME                       sets time in format 'yyyy-MM-dd HH:mm' or 'HH:mm'
@@ -142,7 +143,7 @@ Example:
 ./blood.sh -e pgsql -i createdb.sql
 ./blood.sh -p 123/80/90/'my fancy comment'
 ./blood.sh -p 123/80/90/'my fancy comment' -t '2024-05-30 06:26'
-./blood.sh -p 123/80/90/'my fancy comment\ -t '06:31'
+./blood.sh -p 123/80/90/'my fancy comment' -t '06:31'
 ````
 
 ### Example usage
@@ -201,7 +202,6 @@ $ ./run_blood_tests.sh
 
 ## TODO
 - add units option to _blood_template.properties_ so user can specify unit of value he provide to system
-- add feature to store cholesterol level
 - add web interface with features like:
   - GUI interface to :
     - input data manually
@@ -211,6 +211,5 @@ $ ./run_blood_tests.sh
 - import data from various number of file format:
   - json
   - xml
-  - csv
 - publish code from grafana that generates fancy graphs
 - dockerize postgresql with volume on local storage

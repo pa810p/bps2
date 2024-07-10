@@ -1,29 +1,3 @@
-CREATE TABLE IF NOT EXISTS pressure (
-	datetime TIMESTAMP UNIQUE,
-	systolic INTEGER, 
-	diastolic INTEGER, 
-	pulse INTEGER, 
-	comment TEXT DEFAULT ''
-);
-
-CREATE TABLE IF NOT EXISTS sugar (
-  datetime TIMESTAMP UNIQUE,
-  sugar INTEGER NOT NULL,
-  comment TEXT DEFAULT ''
-);
-
-CREATE TABLE IF NOT EXISTS urine_acid (
-  datetime TIMESTAMP UNIQUE,
-  urine INTEGER NOT NULL,
-  comment TEXT DEFAULT ''
-);
-
-CREATE TABLE IF NOT EXISTS cholesterol (
-  datetime TIMESTAMP UNIQUE,
-  cholesterol INTEGER NOT NULL,
-  comment TEXT DEFAULT ''
-);
-
 CREATE TABLE IF NOT EXISTS norms (
   name TEXT,
   human TEXT,
@@ -43,14 +17,20 @@ INSERT INTO norms (name, human, vmin, vmax) VALUES ('sugar full', 'm', 50, 149);
 
 INSERT INTO norms (name, human, vmin, vmax) VALUES ('urine acid', 'm', 300, 360);
 INSERT INTO norms (name, human, vmin, vmax) VALUES ('urine acid', 'f', 240, 300);
-INSERT INTO norms (name, human, vmin, vmax) VALUES ('urine_acid', 'c', 210, 240);
+INSERT INTO norms (name, human, vmin, vmax) VALUES ('urine acid', 'c', 210, 240);
 
-INSERT INTO norms (name, human, vmin, vmax) VALUES ('cholesterol', 'm', 50, 518);
+INSERT INTO norms (name, human, vmin, vmax) VALUES ('cholesterol', 'm', 0, 518);
 
+DROP INDEX IF EXISTS norms_name_idx;
 CREATE UNIQUE index norms_name_idx ON norms (name, human);
 
 ALTER TABLE sugar ADD COLUMN stomach TEXT;
+UPDATE sugar SET stomach='f' WHERE strftime("%H:%M", datetime) >= '10:00';
+UPDATE sugar SET stomach='e' WHERE strftime("%H:%M", datetime) < '10:00';
+
+DROP INDEX IF EXISTS sugar_stomach_idx;
 CREATE INDEX sugar_stomach_idx ON sugar(stomach);
+
 
 
 

@@ -8,7 +8,19 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.2.5
+VERSION=1.2.6
+
+declare -A STOMACH_CONDITION_MAP=(
+  ["empty"]="e"
+  ["full"]="f"
+)
+
+declare -A HUMAN_MAP=(
+  ["male"]="m"
+  ["female"]="f"
+  ["child"]="c"
+  ["other"]="o"
+)
 
 
 ######################################
@@ -42,6 +54,8 @@ function helpme() {
 	echo "-q --query QUERY                     SQL query provided to sqlite database (query should correspond with engine -e option)";
 	echo "-s --sugar SUGAR_LEVEL               sugar level in blood in mg/dL using format of: 123/'comment'";
   echo "                                     where 'comment' is optional";
+  echo "   --empty                           measurement on empty stomach";
+  echo "   --full                            measurement on full stomach";
   echo "-S --import-sugar FILENAME           import sugar from csv FILENAME";
   echo "                                     where 'comment' is optional";
   echo "-t --time TIME                       sets time in format 'yyyy-MM-dd HH:mm' or 'HH:mm'";
@@ -175,8 +189,35 @@ function query() {
 function list_pressure() {
   readonly _LIST_PRESSURE=$1;
 
-  query "SELECT * FROM $PRESSURE_TABLE ORDER BY datetime DESC LIMIT $_LIST_PRESSURE";
+  _QUERY="SELECT datetime,
+    systolic ||
+    (
+      CASE WHEN systolic > syst.vmax THEN ' ↑'
+           WHEN systolic < syst.vmin THEN ' ↓'
+      ELSE ''
+      END
+    ) AS systolic,
+    diastolic ||
+    (
+      CASE WHEN diastolic > dias.vmax THEN ' ↑'
+           WHEN diastolic < dias.vmin THEN ' ↓'
+      ELSE ''
+      END
+    ) AS diastolic,
+    pulse ||
+    (
+      CASE WHEN pulse > puls.vmax THEN ' ↑'
+           WHEN pulse < puls.vmin THEN ' ↓'
+      ELSE ''
+      END
+    ) AS pulse, comment
+  FROM pressure
+  LEFT OUTER JOIN norms syst ON ('systolic'=syst.name AND syst.human='${HUMAN_MAP[$HUMAN]}')
+  LEFT OUTER JOIN norms dias ON ('diastolic'=dias.name AND dias.human='${HUMAN_MAP[$HUMAN]}')
+  LEFT OUTER JOIN norms puls ON ('pulse'=puls.name AND puls.human='${HUMAN_MAP[$HUMAN]}')
+  ORDER BY datetime DESC LIMIT $_LIST_PRESSURE";
 
+  query "$_QUERY";
 }
 
 ######################################################
@@ -184,6 +225,7 @@ function list_pressure() {
 # its a wrapper for query function
 # Globals:
 #  SUGAR_TABLE
+#  HUMAN
 # Arguments:
 #  number of entries to receive
 ######################################################
@@ -191,8 +233,24 @@ function list_sugar() {
 
   readonly _LIST_SUGAR=$1;
 
-  query "SELECT * FROM $SUGAR_TABLE ORDER BY datetime DESC LIMIT $_LIST_SUGAR";
+  _QUERY="SELECT datetime, sugar ||
+    (
+     CASE WHEN sugar > vmax THEN ' ↑'
+          WHEN sugar < vmin THEN ' ↓'
+     ELSE ''
+      END
+     ), comment
+     FROM $SUGAR_TABLE
+     LEFT OUTER JOIN norms ON (
+     (
+      CASE WHEN sugar.stomach='f' THEN 'sugar full'
+           WHEN sugar.stomach='e' THEN 'sugar empty'
+      END
+     )=norms.name AND human='${HUMAN_MAP[$HUMAN]}'
+    )
+    ORDER BY datetime DESC LIMIT $_LIST_SUGAR";
 
+    query "$_QUERY";
 }
 
 ######################################################
@@ -204,11 +262,20 @@ function list_sugar() {
 #  number of entries to receive
 ######################################################
 function list_urine_acid() {
-
   readonly _LIST_URINE_ACID=$1;
 
-  query "SELECT * FROM $URINE_ACID_TABLE ORDER BY datetime DESC LIMIT $_LIST_URINE_ACID";
+  _QUERY="SELECT datetime, urine ||
+    (
+     CASE WHEN urine > vmax THEN ' ↑'
+          WHEN urine < vmin THEN ' ↓'
+     ELSE ''
+     END
+     ), comment
+    FROM urine_acid
+    LEFT OUTER JOIN norms ON ('urine acid'=norms.name AND human='${HUMAN_MAP[$HUMAN]}')
+    ORDER BY datetime DESC LIMIT $_LIST_URINE_ACID";
 
+  query "$_QUERY";
 }
 
 ######################################################
@@ -220,11 +287,20 @@ function list_urine_acid() {
 #  number of entries to receive
 ######################################################
 function list_cholesterol() {
-
   readonly _LIST_CHOLESTEROL=$1;
 
-  query "SELECT * FROM $CHOLESTEROL_TABLE ORDER BY datetime DESC LIMIT $_LIST_CHOLESTEROL";
+  _QUERY="SELECT datetime, cholesterol ||
+    (
+     CASE WHEN cholesterol > vmax THEN ' ↑'
+          WHEN cholesterol < vmin THEN ' ↓'
+     ELSE ''
+     END
+     ), comment
+    FROM cholesterol
+    LEFT OUTER JOIN norms ON ('cholesterol'=norms.name AND human='${HUMAN_MAP[$HUMAN]}')
+    ORDER BY datetime DESC LIMIT $_LIST_CHOLESTEROL";
 
+  query "$_QUERY";
 }
 
 ###########################################################
@@ -352,14 +428,22 @@ function pressure_add() {
 ############################################
 function sugar_add() {
   readonly _MEASUREMENT=$1;
-	readonly _SUGAR_TIME=$2;
-  
-  if [ "$_MEASUREMENT" = "" ] ; then
+  readonly _STOMACH=$2;
+	readonly _SUGAR_TIME=$3;
+
+	debug "stomach: $_STOMACH";
+
+  if [[ "$_MEASUREMENT" = "" ]] ; then
     helpme
     exit 1;
   else
     _SUGAR=$(echo "$_MEASUREMENT" | awk -F '/' '{print $1}')
 		_COMMENT=$(echo "$_MEASUREMENT" | awk -F '/' '{print $2}')
+  fi
+
+  if [[ "$_STOMACH" = "" ]] ; then
+    helpme
+    exit 1;
   fi
 
   info "Sugar: \"$_SUGAR\"";
@@ -371,15 +455,16 @@ function sugar_add() {
   case $DB_ENGINE in
     "sqlite" )
       _QUERY="INSERT INTO $SUGAR_TABLE (
-        datetime, sugar, comment) VALUES (
-				$_SQL_TIME, $_SUGAR, \"$_COMMENT\");"
+        datetime, sugar, comment, stomach) VALUES (
+				$_SQL_TIME, $_SUGAR, \"$_COMMENT\", \"$_STOMACH\");"
 
+      debug "$_QUERY";
       echo "$_QUERY" | $SQLITE "$DATABASE_NAME.db";
     ;;
     "pgsql" )
       _QUERY="INSERT INTO $SUGAR_TABLE (
-        datetime, sugar, comment) VALUES (
-        $_SQL_TIME, $_SUGAR, '$_COMMENT');"
+        datetime, sugar, comment, stomach) VALUES (
+        $_SQL_TIME, $_SUGAR, '$_COMMENT', '$_STOMACH');"
 			
       _COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
       $_COMMAND -c "$_QUERY";
@@ -599,12 +684,12 @@ function import_sugar() {
 		;;
 		"pgsql" )
 			info "$PGSQL postgresql://$DATABASE_USER:xxxxxxxx@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME";
-			info "-c \"\\COPY tmp_$SUGAR_TABLE(datetime, sugar, comment) FROM $_FILE DELIMITER ',' CSV\";";
+			info "-c \"\\COPY tmp_$SUGAR_TABLE(datetime, sugar, comment, stomach) FROM $_FILE DELIMITER ',' CSV\";";
 			COMMAND="$PGSQL postgresql://$DATABASE_USER:$DATABASE_PASSWD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
 
 			$COMMAND -c "CREATE TABLE tmp_$SUGAR_TABLE AS TABLE $SUGAR_TABLE;";
-			$COMMAND -c "\\COPY tmp_$SUGAR_TABLE(datetime, sugar, comment) FROM $_FILE DELIMITER ',' CSV;";
-			$COMMAND -c "INSERT INTO $SUGAR_TABLE(datetime, sugar, comment) SELECT datetime, sugar, comment FROM tmp_$SUGAR_TABLE ON CONFLICT DO NOTHING;";
+			$COMMAND -c "\\COPY tmp_$SUGAR_TABLE(datetime, sugar, comment, stomach) FROM $_FILE DELIMITER ',' CSV;";
+			$COMMAND -c "INSERT INTO $SUGAR_TABLE(datetime, sugar, comment, stomach) SELECT datetime, sugar, comment, stomach FROM tmp_$SUGAR_TABLE ON CONFLICT DO NOTHING;";
 			$COMMAND -c "DROP TABLE tmp_$SUGAR_TABLE;";
 		;;
 		* ) critical "engine is not set!";;
@@ -731,7 +816,7 @@ function sync() {
 			import_pressure "$_DESTINATION" "$_TMP_FILE";
 
       $SQLITE -list -separator ',' "$DATABASE_NAME.db" \
-        "SELECT datetime, sugar, '\"' || REPLACE(comment, '\"', '\"\"') || '\"' FROM $SUGAR_TABLE;" \
+        "SELECT datetime, sugar, '\"' || REPLACE(comment, '\"', '\"\"') || '\"', stomach FROM $SUGAR_TABLE;" \
         > "$_TMP_FILE";
       debug "cat $_TMP_FILE:";
       debug "$(cat "$_TMP_FILE")";
@@ -759,7 +844,6 @@ function sync() {
 		;;
 		* ) critical "engine is not set!";;
 	esac
-
 }
 
 ###################################################################
@@ -805,37 +889,37 @@ function main() {
   while true; do
     case "$1" in
       -a | --urine-acid )
-        if [ "$2" != "" ]; then readonly OPTION_URINE_ACID=$2; shift 2 ;
+        if [[ "$2" != "" ]]; then readonly OPTION_URINE_ACID=$2; shift 2 ;
         else missing_parameter_error "$1";
         fi
         ;;
       -A | --import-urine-acid )
-        if [ "$2" != "" ]; then readonly IMPORT_URINE_ACID=$2; shift 2;
+        if [[ "$2" != "" ]]; then readonly IMPORT_URINE_ACID=$2; shift 2;
         else missing_parameter_error "$1";
         fi
         ;;
       -b | --database-port )
-        if [ "$2" != "" ]; then readonly DATABASE_PORT=$2; shift 2;
+        if [[ "$2" != "" ]]; then readonly DATABASE_PORT=$2; shift 2;
         else missing_parameter_error "$1";
         fi
         ;;
       -c | --cholesterol )
-        if [ "$2" != "" ]; then readonly OPTION_CHOLESTEROL=$2; shift 2;
+        if [[ "$2" != "" ]]; then readonly OPTION_CHOLESTEROL=$2; shift 2;
         else missing_parameter_error "$1";
         fi
         ;;
       -C | --import-cholesterol )
-        if [ "$2" != "" ]; then readonly IMPORT_CHOLESTEROL=$2; shift 2;
+        if [[ "$2" != "" ]]; then readonly IMPORT_CHOLESTEROL=$2; shift 2;
         else missing_parameter_error "$1";
         fi
         ;;
       -D | --dbname )
-          if [ "$2" != "" ]; then readonly DATABASE_NAME=$2; shift 2 ;
+          if [[ "$2" != "" ]]; then readonly DATABASE_NAME=$2; shift 2 ;
           else missing_parameter_error "$1";
           fi
         ;;
       -e | --engine )
-          if [ "$2" != "" ]; then readonly DB_ENGINE=$2; shift 2 ;
+          if [[ "$2" != "" ]]; then readonly DB_ENGINE=$2; shift 2 ;
           else missing_parameter_error "$1";
           fi
         ;;
@@ -848,12 +932,12 @@ function main() {
           ;;
       -h | --help ) helpme; exit 0;;
       -H | --host )
-          if [ "$2" != "" ]; then readonly DATABASE_HOST=$2; shift 2 ;
+          if [[ "$2" != "" ]]; then readonly DATABASE_HOST=$2; shift 2 ;
           else missing_parameter_error "$1";
           fi
         ;;
       -i | --initialize )
-          if [ "$2" != "" ]; then readonly INIT_FILENAME=$2; shift 2 ;
+          if [[ "$2" != "" ]]; then readonly INIT_FILENAME=$2; shift 2 ;
           else missing_parameter_error "$1";
           fi
         ;;
@@ -863,68 +947,74 @@ function main() {
           fi
         ;;
       --list-cholesterol )
-          if [ "$2" != "" ]; then readonly LIST_CHOLESTEROL=$2; shift 2;
+          if [[ "$2" =~ [0-9]+ ]]; then readonly LIST_CHOLESTEROL=$2; shift 2;
           else readonly LIST_CHOLESTEROL=$LIST_ENTRIES; shift;
           fi
         ;;
       --list-pressure )
-          if [ "$2" != "" ]; then readonly LIST_PRESSURE=$2; shift 2 ;
+          if [[ "$2" =~ [0-9]+ ]]; then readonly LIST_PRESSURE=$2; shift 2 ;
           else readonly LIST_PRESSURE=$LIST_ENTRIES; shift;
           fi
         ;;
       --list-sugar )
-          if [ "$2" != "" ]; then readonly LIST_SUGAR=$2; shift 2 ;
+          if [[ "$2" =~ [0-9]+ ]]; then readonly LIST_SUGAR=$2; shift 2 ;
           else readonly LIST_SUGAR=$LIST_ENTRIES; shift;
           fi
         ;;
       --list-urine-acid )
-            if [ "$2" != "" ]; then readonly LIST_URINE_ACID=$2; shift 2 ;
+            if [ "$2" =~ [0-9]+ ]; then readonly LIST_URINE_ACID=$2; shift 2 ;
             else readonly LIST_URINE_ACID=$LIST_ENTRIES; shift;
             fi
         ;;
       --log-level )
-            if [ "$2" != "" ]; then readonly LOG_LEVEL=$2; shift 2 ;
+            if [[ "$2" != "" ]]; then readonly LOG_LEVEL=$2; shift 2 ;
             else readonly LOG_LEVEL=$LOG_LEVEL
             fi
         ;;
       -p | --pressure )
-          if [ "$2" != "" ]; then readonly OPTION_PRESSURE=$2; shift 2;
+          if [[ "$2" != "" ]]; then readonly OPTION_PRESSURE=$2; shift 2;
           else missing_parameter_error "$1";
           fi
         ;;
       -P | --import-pressure )
-          if [ "$2" != "" ]; then readonly IMPORT_PRESSURE=$2; shift 2 ;
+          if [[ "$2" != "" ]]; then readonly IMPORT_PRESSURE=$2; shift 2 ;
           else missing_parameter_error "$1";
           fi
         ;;
       -q | --query )
-          if [ "$2" != "" ]; then readonly OPTION_QUERY=$2; shift 2;
+          if [[ "$2" != "" ]]; then readonly OPTION_QUERY=$2; shift 2;
           else missing_parameter_error "$1";
           fi
         ;;
       -s | --sugar )
-            if [ "$2" != "" ]; then readonly OPTION_SUGAR=$2; shift 2 ;
-            else missing_parameter_error "$1";
-            fi
+          if [[ "$2" != "" ]]; then readonly OPTION_SUGAR=$2; shift 2 ;
+          else missing_parameter_error "$1";
+          fi
+        ;;
+      --empty )
+          STOMACH_CONDITION="empty"; shift 1;
+        ;;
+      --full )
+          STOMACH_CONDITION="full"; shift 1;
         ;;
       -S | --import-sugar )
-          if [ "$2" != "" ]; then readonly IMPORT_SUGAR=$2; shift 2 ;
+          if [[ "$2" != "" ]]; then readonly IMPORT_SUGAR=$2; shift 2 ;
           else missing_parameter_error "$1";
           fi
         ;;
       -t | --time )
-          if [ "$2" != "" ]; then readonly OPTION_TIME=$2; shift 2 ;
+          if [[ "$2" != "" ]]; then readonly OPTION_TIME=$2; shift 2 ;
           else missing_parameter_error "$1"; shift ;
           fi
         ;;
       -U | --user )
-          if [ "$2" != "" ]; then readonly USER=$2; shift 2 ;
+          if [[ "$2" != "" ]]; then readonly USER=$2; shift 2 ;
           else missing_parameter_error "$1";
           fi
         ;;
       -v | --version ) version; ;;
       -X | --sync )
-          if [ "$2" != "" ]; then readonly OPTION_SYNC=$2; shift 2 ;
+          if [[ "$2" != "" ]]; then readonly OPTION_SYNC=$2; shift 2 ;
           else missing_parameter_error "$1";
           fi
         ;;
@@ -957,8 +1047,13 @@ function main() {
     pressure_add "$OPTION_PRESSURE" "$OPTION_TIME";
 
   elif [ "$OPTION_SUGAR" ]; then
-    sugar_add "$OPTION_SUGAR" "$OPTION_TIME";
-
+    _STOMACH="${STOMACH_CONDITION_MAP[$STOMACH_CONDITION]}"
+    if [ "$_STOMACH" != "" ]; then
+      sugar_add "$OPTION_SUGAR" "$_STOMACH" "$OPTION_TIME";
+    else
+      error "configuration error, use options --empty or --full or set default into properties file";
+      exit 1;
+    fi
   elif [ "$OPTION_URINE_ACID" ]; then
     urine_acid_add "$OPTION_URINE_ACID" "$OPTION_TIME";
 
