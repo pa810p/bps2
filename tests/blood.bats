@@ -1567,4 +1567,140 @@ import_sample_cholesterol() {
   assert_output --partial "ERROR: Missing parameter for option --sync"
 }
 
+@test "should list sugar norms on empty stomach on sqlite" {
+  init_sqlite_database
+  result="$(run $BLOOD -n sugar_empty)"
 
+  grep -q "Norms for: Sugar on empty stomach" <<< $result
+  grep -q "50 - 99" <<< $result;
+}
+
+@test "should list sugar norms on full stomach on sqlite" {
+  init_sqlite_database
+  result="$(run $BLOOD -n sugar_full)"
+
+  grep -q "Norms for: Sugar on full stomach" <<< $result
+  grep -q "50 - 149" <<< $result;
+}
+
+@test "should list sugar norms on sqlite" {
+  init_sqlite_database
+  result="$(run $BLOOD -n sugar)"
+
+  grep -q "Norms for: Sugar on empty stomach" <<< $result
+  grep -q "50 - 99" <<< $result;
+  grep -q "Norms for: Sugar on full stomach" <<< $result
+  grep -q "50 - 149" <<< $result;
+}
+
+@test "should list pressure norms on sqlite" {
+  init_sqlite_database
+  result="$(run $BLOOD -n pressure)"
+
+  grep -q "Norms for: Pressure" <<< $result;
+  grep -q "diastolic|60|100" <<< $result;
+  grep -q "pulse|60|90" <<< $result;
+  grep -q "systolic|100|140" <<< $result;
+}
+
+@test "should list cholesterol norms on sqlite" {
+  init_sqlite_database
+  result="$(run $BLOOD -n cholesterol)"
+
+  grep -q "Norms for: Cholesterol" <<< $result;
+  grep -q "0 - 518" <<< $result;
+}
+
+@test "should list urine acid norms on sqlite" {
+  init_sqlite_database
+
+  result="$(run $BLOOD -n urine_acid)"
+
+  grep -q "Norms for: Urine acid" <<< $result;
+  grep -q "300 - 360" <<< $result;
+}
+
+@test "should list all norms on sqlite" {
+  init_sqlite_database
+
+  result="$(run $BLOOD -n)";
+  grep -q "Norms for: Pressure" <<< $result;
+  grep -q "diastolic|60|100" <<< $result;
+  grep -q "pulse|60|90" <<< $result;
+  grep -q "systolic|100|140" <<< $result;
+  grep -q "Norms for: Cholesterol" <<< $result;
+  grep -q "0 - 518" <<< $result;
+  grep -q "Norms for: Urine acid" <<< $result;
+  grep -q "300 - 360" <<< $result;
+}
+
+
+
+
+#----------
+@test "should list sugar norms on empty stomach on pgsql" {
+  init_pgsql_database
+  result="$(run $BLOOD -n sugar_empty)"
+
+  grep -q "Norms for: Sugar on empty stomach" <<< $result
+  grep -q "50 - 99" <<< $result;
+}
+
+@test "should list sugar norms on full stomach on pgsql" {
+  init_pgsql_database
+  result="$(run $BLOOD -n sugar_full)"
+
+  grep -q "Norms for: Sugar on full stomach" <<< $result
+  grep -q "50 - 149" <<< $result;
+}
+
+@test "should list sugar norms on pgsql" {
+  init_pgsql_database
+  result="$(run $BLOOD -n sugar)"
+
+  grep -q "Norms for: Sugar on empty stomach" <<< $result
+  grep -q "50 - 99" <<< $result;
+  grep -q "Norms for: Sugar on full stomach" <<< $result
+  grep -q "50 - 149" <<< $result;
+}
+
+@test "should list pressure norms on pgsql" {
+  init_pgsql_database
+  result="$(run $BLOOD -n pressure)"
+
+  grep -q "Norms for: Pressure" <<< $result;
+  grep -q "diastolic|60|100" <<< $result;
+  grep -q "pulse|60|90" <<< $result;
+  grep -q "systolic|100|140" <<< $result;
+}
+
+@test "should list cholesterol norms on pgsql" {
+  init_pgsql_database
+  result="$(run $BLOOD -n cholesterol)"
+
+  grep -q "Norms for: Cholesterol" <<< $result;
+  grep -q "0 - 518" <<< $result;
+}
+
+@test "should list urine acid norms on pgsql" {
+  init_pgsql_database
+
+  result="$(run $BLOOD -n urine_acid)"
+
+  grep -q "Norms for: Urine acid" <<< $result;
+  grep -q "300 - 360" <<< $result;
+}
+
+@test "should list all norms on pgsql" {
+  init_pgsql_database
+
+  result="$(run $BLOOD -n)";
+  grep -q "Norms for: Pressure" <<< $result;
+  grep -q "diastolic|60|100" <<< $result;
+  grep -q "pulse|60|90" <<< $result;
+  grep -q "systolic|100|140" <<< $result;
+  grep -q "Norms for: Cholesterol" <<< $result;
+  grep -q "0 - 518" <<< $result;
+  grep -q "Norms for: Urine acid" <<< $result;
+  grep -q "300 - 360" <<< $result;
+}
