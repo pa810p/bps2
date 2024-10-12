@@ -317,15 +317,15 @@ function list_cholesterol() {
 function sql_time() {
   readonly _TIME=$1;
 
-  _VALID=`echo $_TIME | grep -G "^20[2-4][0-9]-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-5][0-9]$"`;
+  _VALID=$(echo "$_TIME" | grep -G "^20[2-4][0-9]-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-5][0-9]$");
   if [[ "$_VALID" != "" ]]; then
     echo "'$_TIME'";
     return
   fi
 
-  _VALID=`echo $_TIME | grep -G "^[0-2][0-9]:[0-5][0-9]$"`;
+  _VALID=$(echo "$_TIME" | grep -G "^[0-2][0-9]:[0-5][0-9]$");
   if [[ "$_VALID" != "" ]]; then
-    echo "'`date +'%Y-%m-%d'` $_TIME'"
+    echo "'$(date +'%Y-%m-%d') $_TIME'"
     return
   fi
 
@@ -385,7 +385,7 @@ function pressure_add() {
 	if ! [[ $_DIASTOLIC =~ ^[0-9]+$ ]] ; then fail "Diastolic" "$_DIASTOLIC"; fi
 	if ! [[ $_PULSE =~ ^[0-9]+$ ]] ; then fail "Pulse" "$_PULSE"; fi
 
-  _SQL_TIME=$(sql_time $_PRESSURE_TIME)
+  _SQL_TIME=$(sql_time "$_PRESSURE_TIME")
 
 	case $DB_ENGINE in
 		"sqlite" )
@@ -778,6 +778,57 @@ function import_cholesterol() {
 	esac
 }
 
+function list_norms_pressure() {
+  echo "Norms for: Pressure";
+  local _QUERY="SELECT name, vmin, vmax FROM norms WHERE name IN ('systolic', 'diastolic', 'pulse') AND human='${HUMAN_MAP[$HUMAN]}'";
+  query "$_QUERY";
+  echo "";
+}
+
+function list_norm() {
+  local _NORMS="$1";
+  local _DESCRIPTION="$2";
+  echo "Norms for: $_DESCRIPTION";
+  local _QUERY="SELECT vmin || ' - ' || vmax  FROM norms WHERE name='$_NORMS' AND human='${HUMAN_MAP[$HUMAN]}'";
+  query "$_QUERY"
+  echo "";
+}
+
+
+function list_norms() {
+  local _NORMS=$1;
+
+  case $_NORMS in
+    "pressure" )
+      list_norms_pressure
+      ;;
+    "sugar" )
+      list_norm "sugar empty" "Sugar on empty stomach";
+      list_norm "sugar full" "Sugar on full stomach";
+      ;;
+    "sugar_empty" )
+      list_norm "sugar empty" "Sugar on empty stomach";
+      ;;
+    "sugar_full" )
+      list_norm "sugar full" "Sugar on full stomach";
+      ;;
+    "cholesterol" )
+      list_norm "cholesterol" "Cholesterol";
+      ;;
+    "urine_acid" )
+      list_norm "urine acid" "Urine acid";
+      ;;
+    "all" )
+      list_norms_pressure
+      list_norm "cholesterol" "Cholesterol";
+      list_norm "sugar empty" "Sugar on empty stomach";
+      list_norm "sugar full" "Sugar on full stomach";
+      list_norm "urine acid" "Urine acid";
+      ;;
+  esac
+
+}
+
 #####################################################
 # Synchronize local sqlite database with postgresql
 # Globals:
@@ -803,7 +854,7 @@ function sync() {
 	case $_SOURCE in
 		"sqlite" )
 			_TMP_FILE=$(mktemp -q)
-			if [ ! -f "$_TMP_FILE" ]; then
+			if [[ ! -f "$_TMP_FILE" ]]; then
     		error "$0: Can't create temp file, bye..."
     		exit 1
 			fi
@@ -962,14 +1013,19 @@ function main() {
           fi
         ;;
       --list-urine-acid )
-            if [ "$2" =~ [0-9]+ ]; then readonly LIST_URINE_ACID=$2; shift 2 ;
-            else readonly LIST_URINE_ACID=$LIST_ENTRIES; shift;
-            fi
+          if [[ "$2" =~ [0-9]+ ]]; then readonly LIST_URINE_ACID=$2; shift 2 ;
+          else readonly LIST_URINE_ACID=$LIST_ENTRIES; shift;
+          fi
         ;;
       --log-level )
-            if [[ "$2" != "" ]]; then readonly LOG_LEVEL=$2; shift 2 ;
-            else readonly LOG_LEVEL=$LOG_LEVEL
-            fi
+          if [[ "$2" != "" ]]; then readonly LOG_LEVEL=$2; shift 2 ;
+          else readonly LOG_LEVEL=$LOG_LEVEL; shift;
+          fi
+        ;;
+      -n | --norms )
+          if [[ "$2" =~ ^\-.* ]] || [[ "$2" == "" ]]; then readonly LIST_NORMS="all"; shift;
+          else readonly LIST_NORMS="$2"; shift;
+          fi
         ;;
       -p | --pressure )
           if [[ "$2" != "" ]]; then readonly OPTION_PRESSURE=$2; shift 2;
@@ -1004,7 +1060,7 @@ function main() {
         ;;
       -t | --time )
           if [[ "$2" != "" ]]; then readonly OPTION_TIME=$2; shift 2 ;
-          else missing_parameter_error "$1"; shift ;
+          else missing_parameter_error "$1";
           fi
         ;;
       -U | --user )
@@ -1028,45 +1084,45 @@ function main() {
     pgsql ) info "Using postgresql engine with name: $DATABASE_NAME"; shift 2 ;;
   esac
 
-  if [ "$INIT_FILENAME" != "" ]; then
+  if [[ "$INIT_FILENAME" != "" ]]; then
     init "$INIT_FILENAME";
 
-  elif [ "$IMPORT_PRESSURE" != "" ]; then
+  elif [[ "$IMPORT_PRESSURE" != "" ]]; then
     import_pressure "$DB_ENGINE" "$IMPORT_PRESSURE";
 
-  elif [ "$IMPORT_SUGAR" != "" ]; then
+  elif [[ "$IMPORT_SUGAR" != "" ]]; then
     import_sugar "$DB_ENGINE" "$IMPORT_SUGAR";
 
-  elif [ "$IMPORT_URINE_ACID" != "" ]; then
+  elif [[ "$IMPORT_URINE_ACID" != "" ]]; then
     import_urine_acid "$DB_ENGINE" "$IMPORT_URINE_ACID";
 
-  elif [ "$IMPORT_CHOLESTEROL" != "" ]; then
+  elif [[ "$IMPORT_CHOLESTEROL" != "" ]]; then
     import_cholesterol "$DB_ENGINE" "$IMPORT_CHOLESTEROL";
 
-  elif [ "$OPTION_PRESSURE" != "" ]; then
+  elif [[ "$OPTION_PRESSURE" != "" ]]; then
     pressure_add "$OPTION_PRESSURE" "$OPTION_TIME";
 
-  elif [ "$OPTION_SUGAR" ]; then
+  elif [[ "$OPTION_SUGAR" ]]; then
     _STOMACH="${STOMACH_CONDITION_MAP[$STOMACH_CONDITION]}"
-    if [ "$_STOMACH" != "" ]; then
+    if [[ "$_STOMACH" != "" ]]; then
       sugar_add "$OPTION_SUGAR" "$_STOMACH" "$OPTION_TIME";
     else
       error "configuration error, use options --empty or --full or set default into properties file";
       exit 1;
     fi
-  elif [ "$OPTION_URINE_ACID" ]; then
+  elif [[ "$OPTION_URINE_ACID" ]]; then
     urine_acid_add "$OPTION_URINE_ACID" "$OPTION_TIME";
 
-  elif [ "$OPTION_CHOLESTEROL" ]; then
+  elif [[ "$OPTION_CHOLESTEROL" ]]; then
     cholesterol_add "$OPTION_CHOLESTEROL" "$OPTION_TIME";
 
-  elif [ "$OPTION_SYNC" != "" ]; then
+  elif [[ "$OPTION_SYNC" != "" ]]; then
     sync "$OPTION_SYNC";
 
-  elif [ "$OPTION_QUERY" != "" ]; then
+  elif [[ "$OPTION_QUERY" != "" ]]; then
     query "$OPTION_QUERY";
 
-  elif [ "$LIST" != "" ]; then
+  elif [[ "$LIST" != "" ]]; then
     debug "LIST=$LIST"
     log
     log "${COLOR_GREEN}Pressure:${COLOR_RESET}";
@@ -1081,17 +1137,20 @@ function main() {
     log "${COLOR_GREEN}Cholesterol:${COLOR_RESET}";
     list_cholesterol "$LIST";
 
-  elif [ "$LIST_PRESSURE" != "" ]; then
+  elif [[ "$LIST_PRESSURE" != "" ]]; then
     list_pressure "$LIST_PRESSURE";
 
-  elif [ "$LIST_SUGAR" != "" ]; then
+  elif [[ "$LIST_SUGAR" != "" ]]; then
     list_sugar "$LIST_SUGAR";
 
-  elif [ "$LIST_URINE_ACID" != "" ]; then
+  elif [[ "$LIST_URINE_ACID" != "" ]]; then
     list_urine_acid "$LIST_URINE_ACID";
 
-  elif [ "$LIST_CHOLESTEROL" != "" ]; then
+  elif [[ "$LIST_CHOLESTEROL" != "" ]]; then
     list_cholesterol "$LIST_CHOLESTEROL";
+
+  elif [[ "$LIST_NORMS" != "" ]]; then
+    list_norms "$LIST_NORMS";
 
   else
     error "ERROR: Not enough parameters!"
