@@ -48,6 +48,8 @@ function helpme() {
 	echo "   --list-urine-acid [LIST_ENTRIES]  list last LIST_ENTRIES (default from properties) entries of urine acid";
 	echo "   --log-level [LEVEL]               logging level where LEVEL may be (0=critical, 1=error, 2=warning, 3=info";
 	echo "                                     4=debug)";
+	echo "-n --norms [TYPE]                    displays range values from norms where TYPE is one of: sugar, sugar_empty, sugar_full";
+  echo "                                     (regarding empty or full stomach), pressure, urine_acid, cholesterol";
 	echo "-p --pressure MEASUREMENT            blood pressure measurement in format of: 120/80/90/'comment'";
 	echo "-P --import_pressure FILENAME        import pressure from csv FILENAME";
 	echo "                                     (systolic/diastolic/pulse/'comment') where comment is optional";
