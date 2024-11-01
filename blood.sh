@@ -22,3 +22,9 @@ fi;
 source $(dirname $0)/blood_functions.sh
 
 main "$@";
+
+#declare -A UNITS
+#read_units UNITS;
+#for name in "${!UNITS[@]}"; do
+#  echo "Name: $name, Email: ${UNITS[$name]}"
+#done

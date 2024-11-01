@@ -595,7 +595,7 @@ import_sample_cholesterol() {
   import_sample_urine_acid sqlite
   import_sample_cholesterol sqlite
 
-  result="$($BLOOD -l 2 --log-level debug)";
+  result="$(run $BLOOD -l 2 --log-level debug)";
 
   grep -q "100|80|84|fourth pressure" <<< "$result"
   grep -q "100|80|83|third pressure" <<< "$result"

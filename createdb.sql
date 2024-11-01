@@ -85,3 +85,17 @@ INSERT INTO norms (name, human, vmin, vmax) VALUES ('cholesterol', 'f', 50, 518)
 ALTER TABLE sugar ADD COLUMN stomach TEXT;
 
 CREATE INDEX sugar_stomach_idx ON sugar(stomach);
+
+DROP TABLE IF EXISTS units;
+
+CREATE TABLE IF NOT EXISTS units (
+  name TEXT,
+  unit TEXT
+);
+
+INSERT INTO units (name, unit) VALUES ('diastolic', 'mmHg');
+INSERT INTO units (name, unit) VALUES ('systolic', 'mmHg');
+INSERT INTO units (name, unit) VALUES ('pulse', 'hpm');
+INSERT INTO units (name, unit) VALUES ('urine_acid', 'mmol/L');
+INSERT INTO units (name, unit) VALUES ('cholesterol', 'mg/dL');
+INSERT INTO units (name, unit) VALUES ('sugar', 'mg/dL');

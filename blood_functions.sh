@@ -8,7 +8,7 @@
 # License:    GNU General Public License v3.0  see: LICENSE                   #
 ###############################################################################
 
-VERSION=1.2.6
+VERSION=1.3.1
 
 declare -A STOMACH_CONDITION_MAP=(
   ["empty"]="e"
@@ -152,10 +152,12 @@ function critical() {
 #   SQLITE
 # Arguments:
 #   sql query to execute
+#   format
 ##############################
 function query() {
 
 	_QUERY=$1;
+	_FORMAT=$2;
 
 	debug "Executing query: $_QUERY";
 
@@ -180,6 +182,18 @@ function query() {
 	esac
 }
 
+function read_units() {
+
+  local -n UNITS_REF=$1
+
+  _QUERY="SELECT name, unit FROM units;";
+
+  while read -r name unit; do
+    UNITS_REF["$name"]="$unit";
+  done < <(query "$_QUERY" "false")
+
+}
+
 ######################################################
 # Queries blood table for given number of entries
 # its a wrapper for query function
@@ -191,33 +205,66 @@ function query() {
 function list_pressure() {
   readonly _LIST_PRESSURE=$1;
 
+  local -A UNITS
+  read_units UNITS
+
   _QUERY="SELECT datetime,
-    systolic ||
+    systolic || ' ${UNITS["systolic"]}' ||
     (
       CASE WHEN systolic > syst.vmax THEN ' ↑'
            WHEN systolic < syst.vmin THEN ' ↓'
       ELSE ''
       END
     ) AS systolic,
-    diastolic ||
+    diastolic || ' ${UNITS["diastolic"]}' ||
     (
       CASE WHEN diastolic > dias.vmax THEN ' ↑'
            WHEN diastolic < dias.vmin THEN ' ↓'
       ELSE ''
       END
     ) AS diastolic,
-    pulse ||
+    pulse || ' ${UNITS["pulse"]}' ||
     (
       CASE WHEN pulse > puls.vmax THEN ' ↑'
            WHEN pulse < puls.vmin THEN ' ↓'
       ELSE ''
       END
-    ) AS pulse, comment
+    ) AS pulse,
+     comment
   FROM pressure
   LEFT OUTER JOIN norms syst ON ('systolic'=syst.name AND syst.human='${HUMAN_MAP[$HUMAN]}')
   LEFT OUTER JOIN norms dias ON ('diastolic'=dias.name AND dias.human='${HUMAN_MAP[$HUMAN]}')
   LEFT OUTER JOIN norms puls ON ('pulse'=puls.name AND puls.human='${HUMAN_MAP[$HUMAN]}')
   ORDER BY datetime DESC LIMIT $_LIST_PRESSURE";
+#
+#  _QUERY="SELECT datetime,
+#    systolic ||
+#    (
+#      CASE WHEN systolic > syst.vmax THEN ' ↑'
+#           WHEN systolic < syst.vmin THEN ' ↓'
+#      ELSE ''
+#      END
+#    ) AS \"systolic[${UNITS["systolic"]}]\",
+#    diastolic ||
+#    (
+#      CASE WHEN diastolic > dias.vmax THEN ' ↑'
+#           WHEN diastolic < dias.vmin THEN ' ↓'
+#      ELSE ''
+#      END
+#    ) AS \"diastolic[${UNITS["diastolic"]}]\",
+#    pulse ||
+#    (
+#      CASE WHEN pulse > puls.vmax THEN ' ↑'
+#           WHEN pulse < puls.vmin THEN ' ↓'
+#      ELSE ''
+#      END
+#    ) AS \"pulse[${UNITS["pulse"]}]\",
+#     comment
+#  FROM pressure
+#  LEFT OUTER JOIN norms syst ON ('systolic'=syst.name AND syst.human='${HUMAN_MAP[$HUMAN]}')
+#  LEFT OUTER JOIN norms dias ON ('diastolic'=dias.name AND dias.human='${HUMAN_MAP[$HUMAN]}')
+#  LEFT OUTER JOIN norms puls ON ('pulse'=puls.name AND puls.human='${HUMAN_MAP[$HUMAN]}')
+#  ORDER BY datetime DESC LIMIT $_LIST_PRESSURE";
 
   query "$_QUERY";
 }
@@ -234,6 +281,9 @@ function list_pressure() {
 function list_sugar() {
 
   readonly _LIST_SUGAR=$1;
+
+#  local -A UNITS
+#  read_units UNITS
 
   _QUERY="SELECT datetime, sugar ||
     (
@@ -252,6 +302,24 @@ function list_sugar() {
     )
     ORDER BY datetime DESC LIMIT $_LIST_SUGAR";
 
+#  _QUERY="SELECT datetime, sugar ||
+#    (
+#     CASE WHEN sugar > vmax THEN ' ↑'
+#          WHEN sugar < vmin THEN ' ↓'
+#     ELSE ''
+#      END
+#     ) AS \"sugar [${UNITS["sugar"]}\",
+#     comment
+#     FROM $SUGAR_TABLE
+#     LEFT OUTER JOIN norms ON (
+#     (
+#      CASE WHEN sugar.stomach='f' THEN 'sugar full'
+#           WHEN sugar.stomach='e' THEN 'sugar empty'
+#      END
+#     )=norms.name AND human='${HUMAN_MAP[$HUMAN]}'
+#    )
+#    ORDER BY datetime DESC LIMIT $_LIST_SUGAR";
+
     query "$_QUERY";
 }
 
@@ -266,6 +334,9 @@ function list_sugar() {
 function list_urine_acid() {
   readonly _LIST_URINE_ACID=$1;
 
+#  local -A UNITS
+#  read_units UNITS
+
   _QUERY="SELECT datetime, urine ||
     (
      CASE WHEN urine > vmax THEN ' ↑'
@@ -276,6 +347,17 @@ function list_urine_acid() {
     FROM urine_acid
     LEFT OUTER JOIN norms ON ('urine acid'=norms.name AND human='${HUMAN_MAP[$HUMAN]}')
     ORDER BY datetime DESC LIMIT $_LIST_URINE_ACID";
+
+#_QUERY="SELECT datetime, urine ||
+#    (
+#     CASE WHEN urine > vmax THEN ' ↑'
+#          WHEN urine < vmin THEN ' ↓'
+#     ELSE ''
+#     END
+#     ) AS \"urine acid [${UNITS["urine_acid"]}]\", comment
+#    FROM urine_acid
+#    LEFT OUTER JOIN norms ON ('urine acid'=norms.name AND human='${HUMAN_MAP[$HUMAN]}')
+#    ORDER BY datetime DESC LIMIT $_LIST_URINE_ACID";
 
   query "$_QUERY";
 }
@@ -291,6 +373,9 @@ function list_urine_acid() {
 function list_cholesterol() {
   readonly _LIST_CHOLESTEROL=$1;
 
+#  local -A UNITS
+#  read_units UNITS
+
   _QUERY="SELECT datetime, cholesterol ||
     (
      CASE WHEN cholesterol > vmax THEN ' ↑'
@@ -303,6 +388,18 @@ function list_cholesterol() {
     ORDER BY datetime DESC LIMIT $_LIST_CHOLESTEROL";
 
   query "$_QUERY";
+
+#  _QUERY="SELECT datetime, cholesterol ||
+#      (
+#       CASE WHEN cholesterol > vmax THEN ' ↑'
+#            WHEN cholesterol < vmin THEN ' ↓'
+#       ELSE ''
+#       END
+#       ) AS \"cholesterol [${UNITS["cholesterol"]}]\", comment
+#      FROM cholesterol
+#      LEFT OUTER JOIN norms ON ('cholesterol'=norms.name AND human='${HUMAN_MAP[$HUMAN]}')
+#      ORDER BY datetime DESC LIMIT $_LIST_CHOLESTEROL";
+#
 }
 
 ###########################################################

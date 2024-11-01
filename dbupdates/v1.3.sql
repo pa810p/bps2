@@ -38,3 +38,18 @@ UPDATE sugar SET stomach='e' WHERE to_char(datetime, 'HH24:MI') < '10:00';
 
 DROP INDEX IF EXISTS sugar_stomach_idx;
 CREATE INDEX sugar_stomach_idx ON sugar(stomach);
+
+DROP TABLE units IF EXISTS;
+
+CREATE TABLE units (
+  name TEXT,
+  unit TEXT
+);
+
+INSERT INTO units (name, unit) VALUES ('diastolic', 'mmHg');
+INSERT INTO units (name, unit) VALUES ('systolic', 'mmHg');
+INSERT INTO units (name, unit) VALUES ('pulse', 'hpm');
+INSERT INTO units (name, unit) VALUES ('urine_acid', 'mmol/L');
+INSERT INTO units (name, unit) VALUES ('cholesterol', 'mg/dL');
+INSERT INTO units (name, unit) VALUES ('sugar', 'mg/dL');
+

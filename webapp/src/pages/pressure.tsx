@@ -24,7 +24,7 @@ export const RenderPressure = () => {
     let valid = false;
 
     const handlePressureValidation = (value: React.FormEvent<HTMLInputElement>) => {
-//         const reg = new RegExp("[0-9]{2,3}/[0-9]{2,3}/[0-9]{2,3}")
+        const reg = new RegExp("[0-9]{2,3}/[0-9]{2,3}/[0-9]{2,3}")
         
         console.log(value);
         valid = true;
@@ -32,7 +32,7 @@ export const RenderPressure = () => {
         
     }
 
-//     const white = lightBlue[50];
+    const white = lightBlue[50];
 
     return (
        <AppBar position="static" style={{ background:"lightBlue" }}>
